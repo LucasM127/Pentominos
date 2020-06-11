@@ -1,5 +1,5 @@
 #include "GameState.hpp"
-//#include "GameBoard.hpp"
+#include "GameBoard.hpp"
 
 //ie Paused state
 enum WINSTATETYPE : int
@@ -14,8 +14,11 @@ public:
     WinState(StateMgr &mgr, Context &context, WINSTATETYPE type);
     void handleEvent(const sf::Event &event) override;
     void render() override;//try using a shader? blur it a bit, brighten the colours too...
+    void init() override;
+    void tick() override;
 private:
-    //sf::Shader m_shader;
+    sf::Shader m_shader;
+    GameBoard *board;
     sf::Text m_winText;
     sf::Text m_continueText;
     sf::RenderTexture m_renderTexture;

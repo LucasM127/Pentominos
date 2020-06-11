@@ -3,6 +3,8 @@
 #include "GameBoard.hpp"
 #include "WinState.hpp"
 #include "MenuState.hpp"
+#include <iostream>
+#include <cassert>
 
 StateMgr::StateMgr() : m_grid(22,14,60.f)
 {
@@ -29,7 +31,7 @@ StateMgr::StateMgr() : m_grid(22,14,60.f)
     m_stateMapping[MENU] = [this](int x)->GameState*{return new MenuState(*this, m_context);};
     m_stateMapping[PLAY] = [this](int x)->GameState*{return new GameBoard(*this, m_context, x);};//where x = level
     m_stateMapping[EDIT] = [this](int x)->GameState*{return new EditBoard(*this, m_context);};
-    m_stateMapping[WIN] = [this](int x)->GameState*{return new WinState(*this, m_context, (WINSTATETYPE)x);};//How to send additional DATA?
+    m_stateMapping[WIN] = [this] (int x)->GameState*{return new WinState(*this, m_context, (WINSTATETYPE)x);};//How to send additional DATA?
 
 }
 
@@ -42,6 +44,23 @@ StateMgr::~StateMgr()
 void StateMgr::run()
 {
     sf::Event event;
+    sf::Clock clock;
+    float elapsedTime = 0.f;
+    float tickTime = 0.25f;//0.03125f;
+    float refreshTime = 1.f / 60.f;
+    float tickAccumulator = 0.f;
+    float renderAccumulator = 0.f;
+    float fpsAccumulator = 0.f;
+    int numFrames = 0;
+    
+    //fps display here!
+    sf::Text fpsText;
+    fpsText.setFont(m_font);
+    fpsText.setPosition(m_window.getSize().x - 100.f, 10.f);
+    fpsText.setFillColor(sf::Color::Cyan);
+    //fpsText.setCharacterSize(30);
+
+    clock.restart();
     
     while(m_window.isOpen())
     {
@@ -74,15 +93,54 @@ void StateMgr::run()
             }
     
             newStateWasRequested = false;//delete it???
+            //do
+            m_curGameState->init();//then it works.... and can ask for the pushed pointer here
         }
 
-        //check if window close event handled ???
-        m_window.waitEvent(event);
-        m_curGameState->handleEvent(event);
-        if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) m_window.close();
-        if(event.type == sf::Event::Closed) m_window.close();
-        m_curGameState->update();
-        m_curGameState->render();//draw the grid...
+        elapsedTime = clock.restart().asSeconds();
+        
+        tickAccumulator += elapsedTime;
+        renderAccumulator += elapsedTime;
+        fpsAccumulator += elapsedTime;
+
+//        m_window.waitEvent(event);
+        while (m_window.pollEvent(event))
+        {
+            m_curGameState->handleEvent(event);
+            if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) m_window.close();
+            if(event.type == sf::Event::Closed) m_window.close();
+
+            m_curGameState->update();//updates with the events as a board game
+        }
+        //tick()
+        if(tickAccumulator >= tickTime)
+        {
+            while(tickAccumulator >= tickTime) tickAccumulator -= tickTime;
+            m_curGameState->tick();
+            //numFrames++;
+        }
+
+        if(fpsAccumulator >= 1.f)
+        {
+            while(fpsAccumulator > 1.f) fpsAccumulator -= 1.f;//unless there is a real big lag spike!
+            fpsText.setString(std::to_string(numFrames));
+            numFrames = 0;
+        }
+
+//i bet it is because i have update logic in render ---> yup
+        if(renderAccumulator >= refreshTime)
+        {
+            while(renderAccumulator >= refreshTime) renderAccumulator -= refreshTime;
+            m_window.clear(sf::Color::Black);
+            m_curGameState->render();//draw the grid...
+            m_window.draw(fpsText);
+            m_window.display();
+
+            //numFrames++;
+        }
+
+        numFrames++;
+        sf::sleep(sf::milliseconds(1));
     }
 }
 
@@ -113,12 +171,17 @@ void GameState::requestStatePop()
     mgr.action = POP;
 }
 
+GameState *GameState::getPushedState()
+{
+    return mgr.pOldState;
+}
+
 //default
 void GameState::render()
 {
-    window.clear(sf::Color::Black);
+    //window.clear(sf::Color::Black);
     grid.render(window);
-    window.display();
+    //window.display();
 }
 
 PlayState::PlayState(StateMgr &mgr, Context &context)

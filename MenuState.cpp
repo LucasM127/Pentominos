@@ -86,7 +86,7 @@ void MenuState::handleEvent(const sf::Event &event)
         if(idSelected != INVALID_ID)
         {
             if(idSelected < m_levelTexts.size())
-                requestStateChange(PLAY, idSelected);
+                requestStateChange(PLAY, idSelected);//:(
             /*else
             {
                 requestStateChange(EDIT);
@@ -98,8 +98,8 @@ void MenuState::handleEvent(const sf::Event &event)
 
 void MenuState::render()
 {
-    window.clear(sf::Color::Black);
+    //window.clear(sf::Color::Black);
     grid.render(window);
     for(auto &text : m_levelTexts) window.draw(text);
-    window.display();
+    //window.display();
 }

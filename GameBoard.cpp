@@ -18,18 +18,59 @@
 #include <iostream>
 #include <cassert>
 
-//better to save the hue... for each piece... from color all goes red as hue is zero = red!
-GameBoard::GameBoard(sf::Texture *p_texture, sf::Font &font, int lvl) : grid(22,14,60.f), p_selectedBlock(nullptr)
+void GameBoard::RED()
 {
-    window.create(sf::VideoMode(1320, 840), "Pentominos", sf::Style::Close);
+    for(auto &block : m_blocks)
+    {
+        for(auto &_C : block.coords)
+        {
+            Coord C = block.defaultPos + _C;
+            grid.setCellColor(C, sf::Color::Red);
+        }
+    }
+}
+
+void GameBoard::exit()
+{
+    idHover = 0;
+    hoverChanged = false;
+}
+
+void GameBoard::winUpdate()
+{
+    idLastHovered = idHover;
+    idHover = (idHover+1)%12;
+    //render the pieces
+    drawBlock(m_blocks[idHover]);
+    drawBlock(m_blocks[idLastHovered]);
+}
+
+GameBoard::~GameBoard()
+{
+    std::cout<<"Ended play state"<<std::endl;
+}
+
+//find free spot for piece, drop piece...
+
+//better to save the hue... for each piece... from color all goes red as hue is zero = red!
+GameBoard::GameBoard(StateMgr &mgr, Context &context, int lvl)
+    : GameState(mgr, context), p_selectedBlock(nullptr)
+//GameBoard::GameBoard(sf::Texture *p_texture, sf::Font &font, int lvl) : grid(22,14,60.f), p_selectedBlock(nullptr)
+{
+    isAValidPlacement = true;
+    //std::cout<<"Started play state "<<lvl<<std::endl;
+    window.setTitle("PLAYING");//level title?
+    //window.create(sf::VideoMode(1320, 840), "Pentominos", sf::Style::Close);
     //create a coordinate mapper same size as the grid for our interior grid ???
     CM.width = grid.getWidth();
     CM.height = grid.getHeight();
-    m_data.resize(m_width*m_height, BACKGROUND_ID);
+    int width = grid.getWidth();
+    int height = grid.getHeight();
+    m_data.resize(CM.sz(), BACKGROUND_ID);
     
     srand(time(NULL));
     m_randSeed = rand();
-    setTexMap(p_texture);
+    grid.setTexMap(context.texture);
 
     //set Hues
     {
@@ -41,7 +82,7 @@ GameBoard::GameBoard(sf::Texture *p_texture, sf::Font &font, int lvl) : grid(22,
             if(h > 360.f) h -= 360.f;
             m_blockHues[i] = h / 360.f;
         }
-        m_blockAlpha = 192;
+        m_blockAlpha = 160;//192;
     }
 
     //selected block values...
@@ -53,7 +94,7 @@ GameBoard::GameBoard(sf::Texture *p_texture, sf::Font &font, int lvl) : grid(22,
         won = false;
     }
     
-    m_winzoneMap.resize(m_height, 0);
+    m_winzoneMap.resize(height, 0);
     setWinShape(lvl);
     
     {//Function randomly places blocks without overlap
@@ -64,31 +105,7 @@ GameBoard::GameBoard(sf::Texture *p_texture, sf::Font &font, int lvl) : grid(22,
         bool isFlipped = false;//rand()%2;
         Pentamino block(i, Coord(0,0), rots[r], isFlipped);
         //try and find a free spot to place it...
-        int x,y;
-
-        //find free spot
-        while(true)
-        {
-            numTriesToPlace++;
-            x = rand()%m_width;
-            y = rand()%m_height;
-            int ctr = 0;
-            for(auto &C_ : block.coords)
-            {
-                Coord C = C_ + Coord(x,y);
-                if(!isValid(C)) break;
-                int id = m_data[mapID(C)];
-                
-                if(id != BACKGROUND_ID)
-                {
-                    break;
-                }
-
-                ctr++;
-            }
-            if(ctr == 5) break;
-        }
-        block.defaultPos = Coord(x,y);
+        numTriesToPlace += positionBlockInFreeSpot(block);
         //startBlocks.push_back(block);
         m_blocks.push_back(block);
 
@@ -98,28 +115,61 @@ GameBoard::GameBoard(sf::Texture *p_texture, sf::Font &font, int lvl) : grid(22,
     m_startingBlocks = m_blocks;//for resetting the map
     }
 
-    text.setFont(font);
+    text.setFont(*context.font);
     text.setFillColor(sf::Color::Green);
     text.setPosition(10.f,10.f);
 
-    idTexts.resize(m_width * m_height);
+    idTexts.resize(CM.sz());
     //60 sz blocks.  =. get address of coordinate?
-    for(int i = 0; i < m_width; i++)
-        for(int j = 0; j<m_height; j++)
+    float cellSz = grid.getCellSize();
+    for(int i = 0; i < CM.width; i++)
+        for(int j = 0; j<CM.height; j++)
     {
-        sf::Vector2f pos(getCellSize() * (float)i + 10.f, getCellSize() * (float)j + 10.f);
-        idTexts[j * m_width + i].setFont(font);
-        idTexts[j * m_width + i].setFillColor(sf::Color::Red);
-        idTexts[j * m_width + i].setCharacterSize(20.f);
-        idTexts[j * m_width + i].setPosition(pos);
+        sf::Vector2f pos(cellSz * (float)i + 10.f, cellSz * (float)j + 10.f);
+        idTexts[j * width + i].setFont(font);//at(i,j,w)
+        idTexts[j * width + i].setFillColor(sf::Color::Red);
+        idTexts[j * width + i].setCharacterSize(20.f);
+        idTexts[j * width + i].setPosition(pos);
     }
 
     //draw the entire board once to initialize it...
-    for(int i =0; i< m_width; i++)
-        for(int j= 0; j<m_height; j++)
+    for(int i =0; i< width; i++)
+        for(int j= 0; j< height; j++)
             draw(Coord(i,j));
-} 
+}
 
+int GameBoard::positionBlockInFreeSpot(Pentamino &block)
+{
+    int x,y;
+    int numTriesToPlace = 0;
+
+    //find free spot
+    while(true)
+    {
+        numTriesToPlace++;
+        x = rand()%grid.getWidth();
+        y = rand()%grid.getHeight();
+        int ctr = 0;
+        for(auto &C_ : block.coords)
+        {
+            Coord C = C_ + Coord(x,y);
+            if(!CM.isValid(C)) break;
+            int id = m_data[CM.mapID(C)];
+            
+            if(id != BACKGROUND_ID)
+            {
+                break;
+            }
+
+            ctr++;
+        }
+        if(ctr == 5) break;
+    }
+    block.defaultPos = Coord(x,y);
+    return numTriesToPlace;
+}
+
+//only needs to be called after an event has occured, not every frame...
 void GameBoard::update()
 {    
     //the logic
@@ -133,12 +183,12 @@ void GameBoard::update()
         {
             Coord C = _C + p_selectedBlock->defaultPos;
 
-            if( !isValid(C))
+            if( !CM.isValid(C))
             {
                 isColliding = true;
                 break;
             }
-            int id = m_data[mapID(C)]&0x0F;
+            int id = m_data[CM.mapID(C)]&0x0F;
             if(id < 12)
             {
                 isColliding = true;
@@ -178,30 +228,20 @@ void GameBoard::update()
         //idHover = rand()%12;
         text.setString("YAY!");
         //request state change back...
+        requestStatePush(WIN);//ARGS!!!!!
     }
 
-
-    for(int i = 0; i < getWidth(); i++)
-        for(int j = 0; j< getHeight(); j++)
+    int width = grid.getWidth();
+    int height = grid.getHeight();
+    for(int i = 0; i < width; i++)
+        for(int j = 0; j< height; j++)
     {
         sf::Vector2f pos(60.f * (float)i, 60.f * (float)j);
-        Coord C = getCoordinate(pos);
-        idTexts[j * getWidth() + i].setString(std::to_string((m_data[mapID(C)]&0x0F)));
+        Coord C = grid.getCoordinate(pos);
+        idTexts[j * width + i].setString(std::to_string((m_data[CM.mapID(C)]&0x0F)));//again at(i,j,w) ????
     }
     
-}
-
-void GameBoard::drawBlock(Pentamino &block)
-{
-    Coord P = block.defaultPos;
-    for(auto &C : block.coords) draw(P+C);
-}
-
-void GameBoard::render()
-{
-    /*for(int i =0; i< m_width; i++)
-        for(int j= 0; j<m_height; j++)
-            draw(Coord(i,j));*/
+    //render update logic copypasta
     if(blockWasPlaced || blockWasPickedUp)
     {
         for(auto & C : m_winShapeCoords) draw(C);
@@ -218,8 +258,8 @@ void GameBoard::render()
         for(int i = 0; i < 5; i++)
         {
             Coord C = p_selectedBlock->coords[i] + p_selectedBlock->defaultPos;
-            if(isColliding) setCellColor(C, sf::Color(255,0,0,128), true);
-            else setCellColor(C, sf::Color(0,255,0,128), true);
+            if(isColliding) grid.setCellColor(C, sf::Color(255,0,0,128), true);
+            else grid.setCellColor(C, sf::Color(0,255,0,128), true);
 
             //texture is of the block...
             int texId = p_selectedBlock->texIDs[i];
@@ -228,7 +268,7 @@ void GameBoard::render()
             int y_off = texId/4;
             bool flipped = p_selectedBlock->isFlipped;
             sf::Vector2f uvpos(128.f * (float)x_off, 128.f * (float)y_off);
-            setCellTexture(C, uvpos, {128.f, 128.f}, orientation, flipped);
+            grid.setCellTexture(C, uvpos, {128.f, 128.f}, orientation, flipped);
         }
     }
 
@@ -243,11 +283,26 @@ void GameBoard::render()
     blockWasMoved = false;
     blockWasPickedUp = false;
 
-    window.clear(sf::Color::White);
-    Grid::render(window);
+}
+
+void GameBoard::drawBlock(Pentamino &block)
+{
+    Coord P = block.defaultPos;
+    for(auto &C : block.coords) draw(P+C);
+}
+
+void GameBoard::render()
+{
+    /*for(int i =0; i< m_width; i++)
+        for(int j= 0; j<m_height; j++)
+            draw(Coord(i,j));*/
+    
+
+    //window.clear(sf::Color::White);
+    grid.render(window);
     window.draw(text);
     //for(auto &T : idTexts) window.draw(T);
-    window.display();
+    //window.display();
 }
 
 //so every time we call m_grid.setCell(C)
@@ -259,16 +314,12 @@ void GameBoard::render()
 //assume is valid COORD
 void GameBoard::placeBlock(Pentamino &block)
 {
-    if(block.id == 6)
-    {
-        std::cout<<"FOO"<<std::endl;
-    }
     Coord P = block.defaultPos;
 
     for(int i = 0; i < 5; i++)
     {
         Coord C = P + block.coords[i];
-        m_data[mapID(C)] = (block.id + (i << 4));
+        m_data[CM.mapID(C)] = (block.id + (i << 4));
     }
 
     blockWasPlaced = true;
@@ -278,17 +329,18 @@ void GameBoard::placeBlock(Pentamino &block)
 void GameBoard::pickupBlock(Pentamino &block)
 {
     Coord P = block.defaultPos;
+    lastPos = P;
     
     for(int i = 0; i < 5; ++i)
     {
         Coord C = P + block.coords[i];
         if(isInWinShape(C))
         {
-            m_data[mapID(C)] = WINZONE_ID;
+            m_data[CM.mapID(C)] = WINZONE_ID;
         }
         else
         {
-            m_data[mapID(C)] = BACKGROUND_ID;
+            m_data[CM.mapID(C)] = BACKGROUND_ID;
         }
     }
 
@@ -309,14 +361,11 @@ void GameBoard::draw(Pentamino &block)
 
 void GameBoard::draw(Coord C)
 {
-    if(!isValid(C)) return;
+    if(!CM.isValid(C)) return;
 
-    unsigned int id = m_data[mapID(C)];
+    unsigned int id = m_data[CM.mapID(C)];
     bool inWinShape = isInWinShape(C);
 
-    //colour variation at this location???
-    srand((m_randSeed & 0xFF) << 24 |(C.i & 0xFFF) << 12 | (C.j & 0xFFF));
-    int variation = rand()%16;
     sf::Color color;
 
     if(inWinShape)
@@ -325,13 +374,12 @@ void GameBoard::draw(Coord C)
         else color = sf::Color(255,170,170);
     }
     else color = sf::Color::Black;
-    color = variate(color, variation);
-    setCellColor(C, color, false);
+    grid.setCellColor(C, color, false);
 
     if( (id&0x0F) > 12)
     {
-        if(id == BACKGROUND_ID) setCellTexture(C, {256.f,128.f}, {128.f, 128.f}, rand()%4, rand()%2);
-        else if(id == WINZONE_ID) setCellTexture(C, {384.f,0.f}, {128.f, 128.f}, rand()%4, rand()%2);
+        if(id == BACKGROUND_ID) grid.setCellTexture(C, {256.f,128.f}, {128.f, 128.f});
+        else if(id == WINZONE_ID) grid.setCellTexture(C, {384.f,0.f}, {128.f, 128.f});
         else throw;
         return;
     }
@@ -348,7 +396,7 @@ void GameBoard::draw(Coord C)
     int x_off = texId%4;
     int y_off = texId/4;
     sf::Vector2f uvpos(128.f * (float)x_off, 128.f * (float)y_off);
-    setCellTexture(C, uvpos, {128.f, 128.f}, orientation, flipped);
+    grid.setCellTexture(C, uvpos, {128.f, 128.f}, orientation, flipped);
 
     //color of the piece at the location
     HSL hsl;
@@ -357,7 +405,7 @@ void GameBoard::draw(Coord C)
 
     if(inWinShape)
     {
-        hsl.saturation = 0.8f;
+        hsl.saturation = 0.7f;
     }
     else hsl.saturation = 0.1f;
 
@@ -374,10 +422,10 @@ void GameBoard::draw(Coord C)
     }
 
     color = fromHSL(hsl);
-    color.a = 192;
-    setCellColor(C, color, true);
+    color.a = m_blockAlpha;
+    grid.setCellColor(C, color, true);
 }
-
+/*
 void GameBoard::run()
 {
     while(window.isOpen())
@@ -386,18 +434,22 @@ void GameBoard::run()
         update();
         render();
     }
-}
+}*/
 
-void GameBoard::handleEvents()
+void GameBoard::handleEvent(const sf::Event &event)
 {
-    sf::Event event;
-    window.waitEvent(event);
+//    sf::Event event;
+//    window.waitEvent(event);
     {
     
-    if(event.type == sf::Event::Closed) window.close();
+    //if(event.type == sf::Event::Closed) window.close();
     
     if(event.type == sf::Event::KeyPressed)
     {
+        if(event.key.code == sf::Keyboard::Q || event.key.code == sf::Keyboard::Space)//back to menu...
+        {
+            requestStateChange(MENU);
+        }
         if(event.key.code == sf::Keyboard::A)
             if(p_selectedBlock) 
             {
@@ -419,11 +471,12 @@ void GameBoard::handleEvents()
         //if(event.key.code == sf::Keyboard::R)
         //    reset();
         if(event.key.code == sf::Keyboard::Escape) window.close();
+        if(event.key.code == sf::Keyboard::Y) {requestStatePush(WIN); won = true;}//???}
     }
     if(event.type == sf::Event::MouseMoved)
     {
         sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-        mouseCoord = getCoordinate(mousePos);
+        mouseCoord = grid.getCoordinate(mousePos);
         if(p_selectedBlock)
         {
             if(p_selectedBlock->defaultPos != mouseCoord)
@@ -434,9 +487,9 @@ void GameBoard::handleEvents()
         }
         else
         {//can this crash? -> yes it can
-            if(isValid(mouseCoord))
+            if(CM.isValid(mouseCoord))
             {
-                unsigned int id = m_data[mapID(mouseCoord)]&0x0F;
+                unsigned int id = m_data[CM.mapID(mouseCoord)]&0x0F;
                 hoverChanged = (id != idHover);
                 idLastHovered = idHover;
                 idHover = id; 
@@ -446,10 +499,12 @@ void GameBoard::handleEvents()
     }
     if(event.type == sf::Event::MouseButtonPressed)
     {
-        //get cell id and print out
-        if(isValid(mouseCoord))
+        if(event.mouseButton.button == sf::Mouse::Left) //(sf::Mouse::isButtonPressed(sf::Mouse::Left))
         {
-            int id = m_data[mapID(mouseCoord)]&0x0F;
+        //get cell id and print out
+        if(CM.isValid(mouseCoord))
+        {
+            int id = m_data[CM.mapID(mouseCoord)]&0x0F;
             if(p_selectedBlock == nullptr && id < 12)
             {
                 p_selectedBlock = &m_blocks[id];
@@ -464,6 +519,19 @@ void GameBoard::handleEvents()
                 saveCoords();
                 placeBlock(*p_selectedBlock);
                 checkValidity();
+                p_selectedBlock = nullptr;
+            }
+        }
+        }
+        else if(event.mouseButton.button == sf::Mouse::Right)
+        {
+            //drop the pice
+            if(p_selectedBlock != nullptr)
+            {
+                saveCoords();
+                p_selectedBlock->defaultPos = lastPos;
+//                positionBlockInFreeSpot(*p_selectedBlock);
+                placeBlock(*p_selectedBlock);
                 p_selectedBlock = nullptr;
             }
         }
@@ -495,25 +563,29 @@ void GameBoard::setWinShape(int lvl)
     //unsigned int r = rand()%9;//10;//rand()%Level::m_preLoadedLevels.size();//8;//7;//rand()%8;
     //get a random level!
     Level L(lvl);
+    //
+    window.setTitle(L.name);//FIND A BETTER PLACE TO PUT THIS LATER
 
-    int x_offset = (m_width - L.width)/2;
+    int width = grid.getWidth();
+    int height = grid.getHeight();
+    int x_offset = (width - L.width)/2;
     //x_offset = 32 - x_offset;
-    int y_offset = (m_height - L.height)/4 + 1;
+    int y_offset = (height - L.height)/4 + 1;
     std::cout<<"x_ofsset is "<<x_offset<<std::endl;
     for(unsigned int i = 0; i < L.height; i++)
     {
         m_winzoneMap[i + y_offset] = L.data[i] << x_offset;
     }
 
-    for(int i = 0; i < m_width; i++)
-        for(int j = 0; j < m_height; j++)
+    for(int i = 0; i < width; i++)
+        for(int j = 0; j < height; j++)
         {
             if(checkBit(m_winzoneMap[j],i))
             {
                 //sf::Color color = blockColors[12];
                 //m_grid.setCellColor({i,j},color);
-                if(isValid({i,j}))
-                    m_data[mapID({i,j})] = WINZONE_ID;
+                if(CM.isValid({i,j}))
+                    m_data[CM.mapID({i,j})] = WINZONE_ID;
                 m_winShapeCoords.push_back(Coord(i,j));
             }
         }
@@ -546,11 +618,11 @@ bool GameBoard::isInWinShape(Coord C)
 
 int GameBoard::floodFill(Coord C, bool *visited)
 {
-    if(!isValid(C)) return 0;
-    if(visited[mapID(C)]) return 0;
-    int id = m_data[mapID(C)];
+    if(!CM.isValid(C)) return 0;
+    if(visited[CM.mapID(C)]) return 0;
+    int id = m_data[CM.mapID(C)];
     if(id != WINZONE_ID) return 0;
-    visited[mapID(C)] = true;
+    visited[CM.mapID(C)] = true;
 
     int ctr = 1;
 
@@ -572,7 +644,7 @@ void GameBoard::checkValidity()
     //a piece has been placed or picked up
     //floodfill around...
     //create a visited array?
-    bool visited[m_width * m_height];
+    bool visited[CM.sz()];
     for(auto &b : visited) b = false;
     //int areaSizes[8];
 

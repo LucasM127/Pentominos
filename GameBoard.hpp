@@ -3,7 +3,8 @@
 
 #include "Pentaminos.hpp"
 #include "Level.hpp"
-#include "Grid.hpp"
+//#include "Grid.hpp"
+#include "GameState.hpp"
 
 const unsigned int WINZONE_ID = 14;
 const unsigned int BACKGROUND_ID = 15;
@@ -17,21 +18,25 @@ struct CellData
 };
 
 //uses the grid, but is not the grid
-class GameBoard// : public Grid
+//load the pieces and the level ... ???
+class GameBoard : public GameState
 {
 public:
-    GameBoard(sf::Texture*, sf::Font &font, int lvl);
-    void run();
-    void update();
-    void render();
-    void handleEvents();
+    GameBoard(StateMgr &mgr, Context &context, int lvl);
+    ~GameBoard();
+    //void run();
+    void update() override;
+    void winUpdate();//call every time an event???
+    void render() override;
+    void handleEvent(const sf::Event &event) override;
+    void RED();
 private:
-    sf::RenderWindow window;
-    Grid grid;//drawing grid... we use...
+    //sf::RenderWindow window;
+    //Grid grid;//drawing grid... we use...
     Coord mouseCoord;
     CoordMapper CM;
 
-    sf::Font font;
+    //sf::Font font;
     sf::Text text;
 ////ALL THIS BELOW IS GAMEBOARD_SPECIFIC
     std::vector<uint8_t> m_data;
@@ -43,6 +48,7 @@ private:
     std::vector<Pentamino> m_startingBlocks;
     std::vector<float> m_blockHues;
     Coord lastCoords[5];
+    Coord lastPos;
     bool blockWasMoved;
     bool blockWasPlaced;
     bool blockWasPickedUp;
@@ -50,6 +56,7 @@ private:
     int idLastHovered;
     int m_blockAlpha;
     
+    int positionBlockInFreeSpot(Pentamino &block);
     void placeBlock(Pentamino &block);
     void pickupBlock(Pentamino &block);
     void saveCoords();
@@ -90,6 +97,8 @@ private:
 
     //debug draw
     std::vector<sf::Text> idTexts;
+
+    void exit() override;
 };
 
 #endif//GAMEBOARD_HPP

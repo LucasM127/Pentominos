@@ -40,9 +40,12 @@ class GameState
     friend class StateMgr;
 public:
     virtual ~GameState(){}
+    virtual void init(){}
+    virtual void exit(){}
     virtual void handleEvent(const sf::Event &event){}
     virtual void update(){}
     virtual void render();
+    virtual void tick(){}//ie update but thinkging
 protected:
     Grid &grid;//common grid across the states... just displays different things...
     sf::RenderWindow &window;
@@ -54,6 +57,7 @@ protected:
     void requestStateChange(STATE state, int arg = 0);//, GameState *pOldState);//friend fucntion?
     void requestStatePush(STATE state, int arg = 0);
     void requestStatePop();
+    GameState *getPushedState();
 private:
     StateMgr &mgr;
 };
@@ -69,6 +73,7 @@ public:
     friend void GameState::requestStateChange(STATE state, int arg);//clears the old if isn't nullptr...
     friend void GameState::requestStatePush(STATE state, int arg);
     friend void GameState::requestStatePop();
+    friend GameState *GameState::getPushedState();
 private:
 
   // the stack of states
@@ -82,7 +87,7 @@ private:
   STATE_ACTION action;//BETTER NAME PLEASE
   STATE nextState;
   GameState *pOldState;
-  int stateArg;
+  int stateArg;//int
   Context m_context;
   
   std::unordered_map<STATE, std::function<GameState*(int)> > m_stateMapping;
