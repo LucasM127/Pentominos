@@ -11,6 +11,14 @@
 //place pieces...
 //for each ... on board... then draw the board.
 
+//Winstate, Playground (level creation) states... act on a gameboard also
+//gameboard is NOT a state...
+//is an interface to the board, constraints for the grid to act on.
+//PASS IT THE GRID AND SET OF PIECES
+
+//pick up piece, put down piece, reset pieces
+//IS THAT OK?  Or should i just fudge it
+
 #include "GameBoard.hpp"
 #include "Colors.hpp"
 
@@ -18,24 +26,16 @@
 #include <iostream>
 #include <cassert>
 
-void GameBoard::RED()
-{
-    for(auto &block : m_blocks)
-    {
-        for(auto &_C : block.coords)
-        {
-            Coord C = block.defaultPos + _C;
-            grid.setCellColor(C, sf::Color::Red);
-        }
-    }
-}
+#include <bitset>
 
+//WHY THIS EXISTS IS STUPID
 void GameBoard::exit()
 {
     idHover = 0;
     hoverChanged = false;
 }
 
+//AND THIS TOO... 
 void GameBoard::winUpdate()
 {
     idLastHovered = idHover;
@@ -57,6 +57,9 @@ GameBoard::GameBoard(StateMgr &mgr, Context &context, int lvl)
     : GameState(mgr, context), p_selectedBlock(nullptr)
 //GameBoard::GameBoard(sf::Texture *p_texture, sf::Font &font, int lvl) : grid(22,14,60.f), p_selectedBlock(nullptr)
 {
+    isPlayground = false;
+
+    renderTestBool = false;
     isAValidPlacement = true;
     //std::cout<<"Started play state "<<lvl<<std::endl;
     window.setTitle("PLAYING");//level title?
@@ -402,6 +405,7 @@ void GameBoard::draw(Coord C)
     HSL hsl;
     hsl.hue = m_blockHues[id];
     hsl.lightness = 0.4f;
+    //float luminance = 0.4f;
 
     if(inWinShape)
     {
@@ -409,20 +413,25 @@ void GameBoard::draw(Coord C)
     }
     else hsl.saturation = 0.1f;
 
-    if(won)
+    //is a playground ?
+
+    if(won || isPlayground)
     {
         hsl.saturation = 0.9f;//*= 1.35f;
         hsl.lightness = 0.6f;//1.f;
+        //luminance = 0.6f;
     }
 
     if(id == idHover && p_selectedBlock == nullptr)
     {
         hsl.saturation += 0.1f;
         hsl.lightness += 0.1f;
+        //luminance += 0.1f;
     }
 
     color = fromHSL(hsl);
     color.a = m_blockAlpha;
+    //color = setLuminance(color, luminance);
     grid.setCellColor(C, color, true);
 }
 /*
@@ -472,6 +481,7 @@ void GameBoard::handleEvent(const sf::Event &event)
         //    reset();
         if(event.key.code == sf::Keyboard::Escape) window.close();
         if(event.key.code == sf::Keyboard::Y) {requestStatePush(WIN); won = true;}//???}
+        if(event.key.code == sf::Keyboard::L) {renderTestBool = !renderTestBool;}//???}
     }
     if(event.type == sf::Event::MouseMoved)
     {
@@ -565,16 +575,29 @@ void GameBoard::setWinShape(int lvl)
     Level L(lvl);
     //
     window.setTitle(L.name);//FIND A BETTER PLACE TO PUT THIS LATER
+    if(L.name == "Playground") isPlayground = true;
 
     int width = grid.getWidth();
     int height = grid.getHeight();
     int x_offset = (width - L.width)/2;
     //x_offset = 32 - x_offset;
     int y_offset = (height - L.height)/4 + 1;
-    std::cout<<"x_ofsset is "<<x_offset<<std::endl;
+    std::cout<<"x_ofsset is "<<x_offset<<" width "<<L.width<<std::endl;
     for(unsigned int i = 0; i < L.height; i++)
     {
-        m_winzoneMap[i + y_offset] = L.data[i] << x_offset;
+        //flip the data ?
+        //read from width - 1 - i!
+        //for loop ?
+        uint32_t data = reverseBits(L.data[i], L.width);
+        /*
+        for(unsigned int k = 0; k < L.width; k++)
+        {
+            data = setBit(data, L.width - 1 - k, checkBit(L.data[i], k));
+        }*/
+        std::cout<< std::bitset<12>(data);
+        std::cout<< " ";
+        std::cout << std::bitset<12>(L.data[i]) << std::endl;
+        m_winzoneMap[i + y_offset] = data << x_offset;//L.data[i] << x_offset;
     }
 
     for(int i = 0; i < width; i++)

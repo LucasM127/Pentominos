@@ -1,6 +1,17 @@
 #ifndef GAMEBOARD_HPP
 #define GAMEBOARD_HPP
 
+//States of gameboard ???
+//or something
+//common functions, different defines
+//playground, -> list of pieces, (yes), winzone (no), draw pieces brighter
+//common pieces here
+//Playing -> list of pieces (yes), winzone (yes), draw dimmer
+//Won -> list of pieces (yes) winzone (yes), no input just do fancy win effects
+//Menu/Intro screen -> no list of pieces just the bg grid
+
+//state, -> different base ingredients, and then custom crap in between
+
 #include "Pentaminos.hpp"
 #include "Level.hpp"
 //#include "Grid.hpp"
@@ -29,7 +40,6 @@ public:
     void winUpdate();//call every time an event???
     void render() override;
     void handleEvent(const sf::Event &event) override;
-    void RED();
 private:
     //sf::RenderWindow window;
     //Grid grid;//drawing grid... we use...
@@ -99,6 +109,8 @@ private:
     std::vector<sf::Text> idTexts;
 
     void exit() override;
+
+    bool isPlayground;//hack
 };
 
 #endif//GAMEBOARD_HPP

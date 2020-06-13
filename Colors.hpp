@@ -17,6 +17,8 @@ HSL fromRGB(sf::Color rgb);
 HSL fromRGB(float r, float g, float b);
 
 //color functions
+sf::Color setLuminance(sf::Color color, float luminance);
+
 sf::Color brighten(sf::Color color, float amount = 1.75f);
 
 sf::Color desaturateByAvg(sf::Color &color);

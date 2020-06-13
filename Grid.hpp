@@ -2,9 +2,12 @@
 #define GRID2D_SFML_HPP
 
 //A square grid (not triangular, not hexagonal)
+//adding a vertexBuffer????
 
 #include <SFML/Graphics.hpp>
 #include <vector>
+
+extern bool renderTestBool;
 
 struct Coord
 {
@@ -56,6 +59,8 @@ public:
     void clear(sf::Color color);
 
 private:
+    sf::VertexBuffer m_vbuffer;
+    bool amModified;
     std::vector<sf::Vertex> m_cellShapes;
     float m_cellSize;
     const sf::Texture *m_texMap;

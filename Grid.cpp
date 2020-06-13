@@ -2,6 +2,8 @@
 #include "Colors.hpp"
 #include "LehmerRandom.hpp"
 
+bool renderTestBool;
+
 //this is a vertex mapper
 Grid::Grid(int width, int height, float cellSize)
             : m_width(width), m_height(height), m_cellSize(cellSize), m_texMap(nullptr)
@@ -26,6 +28,13 @@ Grid::Grid(int width, int height, float cellSize)
             m_cellShapes[6 * cellID + 5].position = {(i+1) * m_cellSize, (j+1) * m_cellSize};
         }
     }
+
+    m_vbuffer.setPrimitiveType(sf::Triangles);
+    //test???
+    m_vbuffer.setUsage(sf::VertexBuffer::Dynamic);
+    m_vbuffer.create(m_cellShapes.size());
+    //update only if ... flag is set :)
+    amModified = true;
 }
 
 void Grid::clear(sf::Color color)
@@ -39,6 +48,7 @@ void Grid::clear(sf::Color color)
             setCellTexture({i,j}, {256.f,128.f}, {128.f, 128.f});
         }
     }
+    amModified = true;
 }
 
     /***
@@ -68,6 +78,8 @@ void Grid::setCellColor(Coord C, sf::Color color, bool overlaps)
         color = variate(color, variation);
     }
     for(int i = 0; i<6; i++) m_cellShapes[id+i].color = color;
+
+    amModified = true;
 }
 
 void Grid::flip(Coord C)
@@ -165,6 +177,8 @@ void Grid::setCellTexture(Coord C, sf::Vector2f uv, sf::Vector2f sz, int orienta
         m_cellShapes[6 * cellID + 5].texCoords = m_cellShapes[6 * cellID + 4].texCoords;
         m_cellShapes[6 * cellID + 4].texCoords = m_cellShapes[6 * cellID + 1].texCoords;
     }
+
+    amModified = true;
 }
 
 void Grid::setCellTexture(Coord C, sf::Vector2f uv, sf::Vector2f sz)
@@ -176,12 +190,26 @@ void Grid::setCellTexture(Coord C, sf::Vector2f uv, sf::Vector2f sz)
     setCellTexture(C, uv, sz, (o & 0b11), (o & 0b100));
 }
 
+//does it even make a difference ?
 void Grid::render(sf::RenderTarget &target)
 {
     sf::RenderStates states;
     states.texture = m_texMap;
-    //optionally with texMap...
+//just tinyest bit faster !
+#ifndef VBUFFER
+    if(amModified)
+    {
+        m_vbuffer.update(&m_cellShapes[0]);
+        amModified = false;
+    }
+    target.draw(m_vbuffer, states);
+#else
     target.draw(&m_cellShapes[0],m_cellShapes.size(),sf::Triangles, states);
+#endif
+    
+    //optionally with texMap...
+    
+    //target.draw(&m_cellShapes[0],m_cellShapes.size(),sf::Triangles, states);
     //else target.draw(&m_cellShapes[0],m_cellShapes.size(),sf::Triangles);
 }
 //if get coord from here... only, is invalid if get anywhere else!

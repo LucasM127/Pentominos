@@ -5,8 +5,9 @@
 #include "MenuState.hpp"
 #include <iostream>
 #include <cassert>
-
-StateMgr::StateMgr() : m_grid(22,14,60.f)
+//16x9
+//goes weird if width ever exceeds 32 lol -> cause of winShape as uint32_t
+StateMgr::StateMgr() : m_grid(22,14,60.f)//m_grid(32,18,50.f)//m_grid(22,14,60.f)
 {
     m_curGameState = nullptr;//???
     pOldState = nullptr;
@@ -20,7 +21,9 @@ StateMgr::StateMgr() : m_grid(22,14,60.f)
     action = REPLACE;
 
     //set the window and grid sizes here... common to all states.
-    m_window.create(sf::VideoMode(1320, 840), "Pentominos", sf::Style::Close);
+    int width = m_grid.getSize().x;
+    int height = m_grid.getSize().y;
+    m_window.create(sf::VideoMode(width, height), "Pentominos", sf::Style::Close);
 
     //load assets
     //TODO: TEST FOR LOADFAIL... what to do... abstract out?
@@ -136,10 +139,10 @@ void StateMgr::run()
             m_window.draw(fpsText);
             m_window.display();
 
-            //numFrames++;
+            numFrames++;
         }
 
-        numFrames++;
+        //numFrames++;
         sf::sleep(sf::milliseconds(1));
     }
 }

@@ -86,6 +86,14 @@ sf::Color brighten(sf::Color color, float amount)
     return color;
 }
 
+sf::Color setLuminance(sf::Color color, float luminance)//luminance 0-1
+{
+    luminance *= 255;
+    float curLuminance = 0.299f * float(color.r) + 0.587f * float(color.g) + 0.114f * float(color.b);
+    float factor = luminance / curLuminance;
+    return sf::Color(float(color.r) * factor, float(color.g) * factor, float(color.b) * factor);
+}
+
 sf::Color desaturateByAvg(sf::Color &color)
 {
     int luminance = (float)(color.r + color.g + color.b)/3.f;
