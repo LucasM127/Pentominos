@@ -18,7 +18,7 @@ public:
     void tick() override;
 private:
     sf::Shader m_shader;
-    GameBoard *board;
+    GameBoard &board;
     sf::Text m_winText;
     sf::Text m_continueText;
     sf::RenderTexture m_renderTexture;

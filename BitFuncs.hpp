@@ -23,6 +23,7 @@ inline uint32_t setBit(uint32_t in, int n, bool b)
     return in;//zeroBit(in, n);
 }
 
+//modified from https://www.geeksforgeeks.org/reverse-actual-bits-given-number/
 inline uint32_t reverseBits(uint32_t in, unsigned int width)
 {
     uint32_t reversed = 0;

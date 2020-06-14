@@ -14,8 +14,7 @@
 
 #include "Pentaminos.hpp"
 #include "Level.hpp"
-//#include "Grid.hpp"
-#include "GameState.hpp"
+#include "Grid.hpp"
 
 const unsigned int WINZONE_ID = 14;
 const unsigned int BACKGROUND_ID = 15;
@@ -30,33 +29,66 @@ struct CellData
 
 //uses the grid, but is not the grid
 //load the pieces and the level ... ???
-class GameBoard : public GameState
+//is the World... LOGIC more so than the grid. -> hmmmmmmmmm
+//where can the pieces go?
+//where cant the pieces go?
+//Get the state of all of the pieces... etc...
+//dont even need the grid, - externalize draw would be nice
+//but to draw it, what do we need to do??? pass out a vector of updated coords
+
+//just change our draw function is all... need to be a gameboard to do that
+//inheritance! then need to cast and stuff
+//function pointers seems better
+class GameBoard
 {
 public:
-    GameBoard(StateMgr &mgr, Context &context, int lvl);
+    GameBoard();
     ~GameBoard();
     //void run();
-    void update() override;
+    void reset(uint w, uint h, int level);//-1 for a playground
+    void update();
     void winUpdate();//call every time an event???
-    void render() override;
-    void handleEvent(const sf::Event &event) override;
-private:
-    //sf::RenderWindow window;
-    //Grid grid;//drawing grid... we use...
-    Coord mouseCoord;
+    void handleEvent(const sf::Event &event);//no idea about spatial positioning, why?
+
+    const std::vector<Pentamino> &getBlocks(){return m_blocks;}
+    const std::vector<Coord> &getChangedCoords(){return m_updatedCoords;}
+    const std::vector<uint8_t> &getData(){return m_data;}
+    const std::vector<float> &getBlockHues(){return m_blockHues;}
+    const unsigned int getHoverId(){return idHover;}
+    const int blockAlpha(){return m_blockAlpha;}
+    //getSelectedPieceCoords()
+    Pentamino *getSelectedBlock(){return p_selectedBlock;}
+
+    void rotatePieceRight();
+    void rotatePieceLeft();
+    void flipPiece();
+    void movePiece(Coord C);
+    void pickUpOrPlacePiece();
+    void resetPiece();
+    bool isWon(){return won;}
+    bool isValid(){return isAValidPlacement;}//for drawing the winzone color -sigh-
+    bool isColliding(){return amColliding;}
+    bool isInWinShape(Coord C);
+    bool piecePickedUpOrMoved(){return blockWasPickedUp || blockWasMoved;}
+
     CoordMapper CM;
 
-    //sf::Font font;
-    sf::Text text;
+private:
+    int width, height;
+//    Grid &grid;
+
+    Coord mouseCoord;
+
 ////ALL THIS BELOW IS GAMEBOARD_SPECIFIC
     std::vector<uint8_t> m_data;
     std::vector<uint32_t> m_winzoneMap;//store in cell data...
 
     Pentamino *p_selectedBlock;
-    bool isColliding;
+    bool amColliding;
     std::vector<Pentamino> m_blocks;
     std::vector<Pentamino> m_startingBlocks;
-    std::vector<float> m_blockHues;
+    std::vector<float> m_blockHues;//par ot the block?
+    std::vector<Coord> m_updatedCoords;
     Coord lastCoords[5];
     Coord lastPos;
     bool blockWasMoved;
@@ -70,45 +102,26 @@ private:
     void placeBlock(Pentamino &block);
     void pickupBlock(Pentamino &block);
     void saveCoords();
-
-    void draw(Coord C);
-    void drawBlock(Pentamino &block);
-    uint32_t m_randSeed;//for the random background effect look... (draw(C) functin...)
-
-    //bool isColliding;
-    //bool inWinShape;
-    //int idCollide;
+    
     unsigned int idHover;
 
     bool won;
 
     bool isAValidPlacement;
-    bool isInWinShape(Coord C);
+    
     void setWinShape();
     void setWinShape(int lvl);
     void checkValidity();
     int floodFill(Coord C, bool *);
     //win is if all pentaminos are in win shape.
 
-    
-    //context shit up top
-    
-    
-    
-    //void clearCoord(Coord C);
-    //void updateBoard();
-    
-    //void draw(Pentamino &block);
-    
-
-    
-    //bool isValidPlace;
     std::vector<Coord> m_winShapeCoords;
 
     //debug draw
-    std::vector<sf::Text> idTexts;
+    //std::vector<sf::Text> idTexts;
 
-    void exit() override;
+//    void draw(Coord C);//THIS CHANGES
+//    void drawBlock(Pentamino &block);
 
     bool isPlayground;//hack
 };

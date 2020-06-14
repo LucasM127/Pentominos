@@ -2,6 +2,7 @@
 #define GAMESTATE_HPP
 
 #include "Grid.hpp"
+#include "GameBoard.hpp"
 #include <unordered_map>//map enum to new type...
 #include <functional>
 
@@ -9,6 +10,7 @@ struct Context
 {
     sf::RenderWindow *window;
     Grid *grid;
+    GameBoard *board;
     sf::Font *font;
     sf::Texture *texture;
 };
@@ -19,7 +21,8 @@ enum STATE
     MENU,
     PLAY,
     EDIT,
-    WIN
+    WIN,
+    PLAYGROUND
 };
 
 enum STATE_ACTION
@@ -80,6 +83,7 @@ private:
   GameState *m_curGameState;
   sf::RenderWindow m_window;
   Grid m_grid;
+  GameBoard m_board;
   sf::Font m_font;
   sf::Texture m_texture;
 
@@ -91,12 +95,6 @@ private:
   Context m_context;
   
   std::unordered_map<STATE, std::function<GameState*(int)> > m_stateMapping;
-};
-
-class PlayState : public GameState
-{
-public:
-    PlayState(StateMgr &mgr, Context &context);
 };
 
 class WelcomeState : public GameState

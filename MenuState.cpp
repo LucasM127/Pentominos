@@ -4,11 +4,13 @@
 #include <iostream>
 
 //!!!
-const uint INVALID_ID = -1;
+//const uint INVALID_ID = -1;
 
 MenuState::MenuState(StateMgr &mgr, Context &context)
     : GameState(mgr, context), font(*context.font)
 {
+    window.setTitle("Pentaminos");
+
     idSelected = -1;
     grid.clear(sf::Color::Black);
     //for each level in levels!
@@ -85,12 +87,12 @@ void MenuState::handleEvent(const sf::Event &event)
     {
         if(idSelected != INVALID_ID)
         {
-            if(idSelected < m_levelTexts.size())
+            if(idSelected < m_levelTexts.size()-1)
                 requestStateChange(PLAY, idSelected);//:(
-            /*else
+            else
             {
-                requestStateChange(EDIT);
-            }*/
+                requestStateChange(PLAYGROUND);
+            }
             
         }
     }

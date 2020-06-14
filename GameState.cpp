@@ -3,6 +3,8 @@
 #include "GameBoard.hpp"
 #include "WinState.hpp"
 #include "MenuState.hpp"
+#include "PlayState.hpp"
+#include "PlayGroundState.hpp"
 #include <iostream>
 #include <cassert>
 //16x9
@@ -13,6 +15,7 @@ StateMgr::StateMgr() : m_grid(22,14,60.f)//m_grid(32,18,50.f)//m_grid(22,14,60.f
     pOldState = nullptr;
     m_context.window = &m_window;
     m_context.grid = &m_grid;
+    m_context.board = &m_board;
     m_context.font = &m_font;
     m_context.texture = &m_texture;
 
@@ -32,8 +35,9 @@ StateMgr::StateMgr() : m_grid(22,14,60.f)//m_grid(32,18,50.f)//m_grid(22,14,60.f
 
     m_stateMapping[WELCOME] = [this](int x)->GameState*{return new WelcomeState(*this, m_context);};
     m_stateMapping[MENU] = [this](int x)->GameState*{return new MenuState(*this, m_context);};
-    m_stateMapping[PLAY] = [this](int x)->GameState*{return new GameBoard(*this, m_context, x);};//where x = level
+    m_stateMapping[PLAY] = [this](int x)->GameState*{return new PlayState(*this, m_context, x);};//where x = level
     m_stateMapping[EDIT] = [this](int x)->GameState*{return new EditBoard(*this, m_context);};
+    m_stateMapping[PLAYGROUND] = [this](int x)->GameState*{return new PlayGroundState(*this, m_context);};
     m_stateMapping[WIN] = [this] (int x)->GameState*{return new WinState(*this, m_context, (WINSTATETYPE)x);};//How to send additional DATA?
 
 }
@@ -185,12 +189,6 @@ void GameState::render()
     //window.clear(sf::Color::Black);
     grid.render(window);
     //window.display();
-}
-
-PlayState::PlayState(StateMgr &mgr, Context &context)
-    : GameState(mgr, context)
-{
-    grid.clear(sf::Color::Blue);
 }
 
 WelcomeState::WelcomeState(StateMgr &mgr, Context &context)

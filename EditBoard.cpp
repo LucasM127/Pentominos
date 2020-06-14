@@ -120,7 +120,7 @@ EditBoard::EditBoard(StateMgr &mgr, Context &context)
     int m_height = grid.getHeight();
     int m_width = grid.getWidth();
     m_data.resize(m_height, 0);
-    window.setTitle("Editor");
+    window.setTitle("Pentaminos");
 //    window.create(sf::VideoMode(1320, 840), "Editor", sf::Style::Close);
 
     std::ifstream file("foo", std::ios::out | std::ios::binary);

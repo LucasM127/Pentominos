@@ -5,12 +5,6 @@
 //hovered event?  animation? someway to verify can pick it up.... (aka brighten)
 //shoot out a piece... if intersects with winzone... shoot out to not intersect... (find free spot -> local???)
 
-//Load pieces
-//each piece has a default color...
-//brighten/darken/desaturate
-//place pieces...
-//for each ... on board... then draw the board.
-
 //Winstate, Playground (level creation) states... act on a gameboard also
 //gameboard is NOT a state...
 //is an interface to the board, constraints for the grid to act on.
@@ -18,6 +12,8 @@
 
 //pick up piece, put down piece, reset pieces
 //IS THAT OK?  Or should i just fudge it
+
+//BUG FOUND: put a piece back after we rotate it!  it overrides, need to rotate back to original rotation!, put in original spots 
 
 #include "GameBoard.hpp"
 #include "Colors.hpp"
@@ -29,52 +25,62 @@
 #include <bitset>
 
 //WHY THIS EXISTS IS STUPID
+/*
 void GameBoard::exit()
 {
     idHover = 0;
     hoverChanged = false;
 }
-
+*/
 //AND THIS TOO... 
 void GameBoard::winUpdate()
 {
     idLastHovered = idHover;
     idHover = (idHover+1)%12;
     //render the pieces
-    drawBlock(m_blocks[idHover]);
-    drawBlock(m_blocks[idLastHovered]);
+    for(auto &C_ : m_blocks[idHover].coords)
+    {
+        Coord C = m_blocks[idHover].defaultPos + C_;
+        m_updatedCoords.push_back(C);
+    }
+    for(auto &C_ : m_blocks[idLastHovered].coords)
+    {
+        Coord C = m_blocks[idLastHovered].defaultPos + C_;
+        m_updatedCoords.push_back(C);
+    }
+    //drawBlock(m_blocks[idHover]);
+    //drawBlock(m_blocks[idLastHovered]);
 }
 
 GameBoard::~GameBoard()
 {
-    std::cout<<"Ended play state"<<std::endl;
+    //std::cout<<"Ended play state"<<std::endl;
 }
 
-//find free spot for piece, drop piece...
-
-//better to save the hue... for each piece... from color all goes red as hue is zero = red!
-GameBoard::GameBoard(StateMgr &mgr, Context &context, int lvl)
-    : GameState(mgr, context), p_selectedBlock(nullptr)
-//GameBoard::GameBoard(sf::Texture *p_texture, sf::Font &font, int lvl) : grid(22,14,60.f), p_selectedBlock(nullptr)
+//need the COord, but that is all
+//resize the grid? what do we do?
+//resize the board
+GameBoard::GameBoard()
 {
-    isPlayground = false;
+}
 
-    renderTestBool = false;
+void GameBoard::reset(uint w, uint h, int lvl)
+{
+    m_winzoneMap.clear();
+    m_winShapeCoords.clear();
+    m_blockHues.clear();
+    m_data.clear();
+    m_blocks.clear();
+
     isAValidPlacement = true;
-    //std::cout<<"Started play state "<<lvl<<std::endl;
-    window.setTitle("PLAYING");//level title?
-    //window.create(sf::VideoMode(1320, 840), "Pentominos", sf::Style::Close);
-    //create a coordinate mapper same size as the grid for our interior grid ???
-    CM.width = grid.getWidth();
-    CM.height = grid.getHeight();
-    int width = grid.getWidth();
-    int height = grid.getHeight();
-    m_data.resize(CM.sz(), BACKGROUND_ID);
-    
-    srand(time(NULL));
-    m_randSeed = rand();
-    grid.setTexMap(context.texture);
 
+    CM.width = w;
+    CM.height = h;
+    width = w;
+    height = h;
+    m_data.resize(CM.sz(), BACKGROUND_ID);
+
+    srand(time(NULL));
     //set Hues
     {
         int hueRandomVariation = rand()%30;
@@ -91,15 +97,19 @@ GameBoard::GameBoard(StateMgr &mgr, Context &context, int lvl)
     //selected block values...
     {
         p_selectedBlock = nullptr;
-        isColliding = false;
+        amColliding = false;
         blockWasMoved = false;
         idHover = INVALID_ID;
+        idLastHovered = INVALID_ID;
+        hoverChanged = false;
+        blockWasPickedUp = false;
+        blockWasPlaced = false;
         won = false;
     }
-    
+
     m_winzoneMap.resize(height, 0);
     setWinShape(lvl);
-    
+
     {//Function randomly places blocks without overlap
     int numTriesToPlace = 0;
     for(int i = 0; i < 12; i++)
@@ -118,10 +128,8 @@ GameBoard::GameBoard(StateMgr &mgr, Context &context, int lvl)
     m_startingBlocks = m_blocks;//for resetting the map
     }
 
-    text.setFont(*context.font);
-    text.setFillColor(sf::Color::Green);
-    text.setPosition(10.f,10.f);
-
+    //grid shit here
+/*
     idTexts.resize(CM.sz());
     //60 sz blocks.  =. get address of coordinate?
     float cellSz = grid.getCellSize();
@@ -139,6 +147,7 @@ GameBoard::GameBoard(StateMgr &mgr, Context &context, int lvl)
     for(int i =0; i< width; i++)
         for(int j= 0; j< height; j++)
             draw(Coord(i,j));
+*/
 }
 
 int GameBoard::positionBlockInFreeSpot(Pentamino &block)
@@ -150,8 +159,8 @@ int GameBoard::positionBlockInFreeSpot(Pentamino &block)
     while(true)
     {
         numTriesToPlace++;
-        x = rand()%grid.getWidth();
-        y = rand()%grid.getHeight();
+        x = rand()%width;
+        y = rand()%height;
         int ctr = 0;
         for(auto &C_ : block.coords)
         {
@@ -172,15 +181,98 @@ int GameBoard::positionBlockInFreeSpot(Pentamino &block)
     return numTriesToPlace;
 }
 
-//only needs to be called after an event has occured, not every frame...
+void GameBoard::rotatePieceRight()
+{
+    if(p_selectedBlock) 
+    {
+        saveCoords();
+        p_selectedBlock->rotateRight();
+    }
+}
+
+void GameBoard::rotatePieceLeft()
+{
+    if(p_selectedBlock)
+    {
+        saveCoords();
+        p_selectedBlock->rotateLeft();
+    }
+}
+void GameBoard::flipPiece()
+{
+    if(p_selectedBlock)
+    {
+        saveCoords();
+        p_selectedBlock->flip();//clear the screen here too!
+    }
+}
+
+void GameBoard::movePiece(Coord C)
+{
+    if(p_selectedBlock)
+    {
+        if(p_selectedBlock->defaultPos != C)
+        {
+            saveCoords();
+            p_selectedBlock->defaultPos = C;
+        }
+    }
+    else
+    {//can this crash? -> yes it can
+        if(CM.isValid(C))
+        {
+            unsigned int id = m_data[CM.mapID(C)]&0x0F;
+            hoverChanged = (id != idHover);
+            idLastHovered = idHover;
+            idHover = id; 
+        }
+        else idHover = INVALID_ID;
+    }
+    mouseCoord = C;
+}
+
+void GameBoard::pickUpOrPlacePiece()
+{
+    if(CM.isValid(mouseCoord))
+    {
+        int id = m_data[CM.mapID(mouseCoord)]&0x0F;
+        if(p_selectedBlock == nullptr && id < 12)
+        {
+            p_selectedBlock = &m_blocks[id];
+
+            //pick up, set cell id to bg id, flag cells for refresh
+            pickupBlock(*p_selectedBlock);
+
+            checkValidity();//of board where we picked it up...
+        }
+        else if(p_selectedBlock && !amColliding)//place it
+        {//check adjacent floodfill algorithm!
+            saveCoords();
+            placeBlock(*p_selectedBlock);
+            checkValidity();
+            p_selectedBlock = nullptr;
+        }
+    }
+}
+
+void GameBoard::resetPiece()
+{
+    if(p_selectedBlock != nullptr)
+    {
+        saveCoords();
+        p_selectedBlock->defaultPos = lastPos;
+//      positionBlockInFreeSpot(*p_selectedBlock);
+        placeBlock(*p_selectedBlock);
+        p_selectedBlock = nullptr;
+    }
+}
+
 void GameBoard::update()
 {    
-    //the logic
-    
     //test for collisions
     if(p_selectedBlock && blockWasMoved)
     {
-        isColliding = false;
+        amColliding = false;
         int winctr = 0;
         for(auto &_C : p_selectedBlock->coords)
         {
@@ -188,13 +280,13 @@ void GameBoard::update()
 
             if( !CM.isValid(C))
             {
-                isColliding = true;
+                amColliding = true;
                 break;
             }
             int id = m_data[CM.mapID(C)]&0x0F;
             if(id < 12)
             {
-                isColliding = true;
+                amColliding = true;
                 break;
             }
             else if(id == WINZONE_ID) winctr++;
@@ -223,19 +315,8 @@ void GameBoard::update()
         }
     }
 //    else won = false;
-
-    if(!won) text.setString("Keep Trying...");
-    else 
-    {
-        //srand(time(NULL));
-        //idHover = rand()%12;
-        text.setString("YAY!");
-        //request state change back...
-        requestStatePush(WIN);//ARGS!!!!!
-    }
-
-    int width = grid.getWidth();
-    int height = grid.getHeight();
+/*
+    //UPDATE THE DEBUG TEXT
     for(int i = 0; i < width; i++)
         for(int j = 0; j< height; j++)
     {
@@ -243,19 +324,34 @@ void GameBoard::update()
         Coord C = grid.getCoordinate(pos);
         idTexts[j * width + i].setString(std::to_string((m_data[CM.mapID(C)]&0x0F)));//again at(i,j,w) ????
     }
+    */
     
     //render update logic copypasta
+    //basically -> all the coords we need to redraw!
+
+    //NEW WAY
+    m_updatedCoords.clear();
+    
     if(blockWasPlaced || blockWasPickedUp)
     {
-        for(auto & C : m_winShapeCoords) draw(C);
+        for(auto & C : m_winShapeCoords) m_updatedCoords.push_back(C);//draw(C);
     }
 
     if(blockWasMoved || blockWasPickedUp)
     {
-        for(auto &C : lastCoords) draw(C);
+        for(auto &C : lastCoords) m_updatedCoords.push_back(C);//draw(C);
     }
 
-    //draw it separately, overlapping anything that was their before...
+    //draw the selected piece overlay
+    if(p_selectedBlock)
+    {
+        for(int i = 0; i < 5; i++)
+        {
+            Coord C = p_selectedBlock->coords[i] + p_selectedBlock->defaultPos;
+            m_updatedCoords.push_back(C);
+        }
+    }
+    /*
     if(p_selectedBlock && (blockWasPickedUp || blockWasMoved))
     {
         for(int i = 0; i < 5; i++)
@@ -274,45 +370,26 @@ void GameBoard::update()
             grid.setCellTexture(C, uvpos, {128.f, 128.f}, orientation, flipped);
         }
     }
+    */
 
-    if(!p_selectedBlock && idHover != INVALID_ID)
+    //idHover == id of where the 'mouse' is
+    //Update so can draw hovered block brighter
+    if(!p_selectedBlock && idHover < 12)//!= INVALID_ID)
     {
         Coord P = m_blocks[idHover].defaultPos;
-        for(auto &C : m_blocks[idHover].coords) draw(P+C);
+        for(auto &C : m_blocks[idHover].coords) m_updatedCoords.push_back(P+C);//(P+C);
     }
-    if(hoverChanged && idLastHovered < 12) drawBlock(m_blocks[idLastHovered]);
+    //update so previously hovered block can be drawn dimmer
+    if(hoverChanged && idLastHovered < 12) //drawBlock(m_blocks[idLastHovered]);
+    {
+        Coord P = m_blocks[idLastHovered].defaultPos;
+        for(auto &C : m_blocks[idLastHovered].coords) m_updatedCoords.push_back(P+C);//draw(P+C);
+    }
     
     blockWasPlaced = false;
     blockWasMoved = false;
     blockWasPickedUp = false;
-
 }
-
-void GameBoard::drawBlock(Pentamino &block)
-{
-    Coord P = block.defaultPos;
-    for(auto &C : block.coords) draw(P+C);
-}
-
-void GameBoard::render()
-{
-    /*for(int i =0; i< m_width; i++)
-        for(int j= 0; j<m_height; j++)
-            draw(Coord(i,j));*/
-    
-
-    //window.clear(sf::Color::White);
-    grid.render(window);
-    window.draw(text);
-    //for(auto &T : idTexts) window.draw(T);
-    //window.display();
-}
-
-//so every time we call m_grid.setCell(C)
-//that means that the cell at (C) is changed
-//which means we need to update how it is to be rendered!
-
-//and also when we move our ... we update the positions lastCoord...
 
 //assume is valid COORD
 void GameBoard::placeBlock(Pentamino &block)
@@ -350,20 +427,102 @@ void GameBoard::pickupBlock(Pentamino &block)
     blockWasPickedUp = true;
 }
 
-//or a shape... really
-/*
-void GameBoard::draw(Pentamino &block)
+void GameBoard::saveCoords()
 {
-    Coord P = block.defaultPos;
-    
-    for(auto &C : block.coords)
-    {
-        draw(P+C);
-    }
-}*/
+    if(!p_selectedBlock) return;
 
+    Coord P = p_selectedBlock->defaultPos;
+    for(int i = 0; i < 5; i++)
+    {
+        lastCoords[i] = P + p_selectedBlock->coords[i];
+    }
+    blockWasMoved = true;
+}
+
+void GameBoard::setWinShape(int lvl)
+{
+    //load the level
+    if(lvl == -1) return;
+    Level L(lvl);
+    
+    int x_offset = (width - L.width)/2;
+    int y_offset = (height - L.height)/4 + 1;
+    std::cout<<"x_ofsset is "<<x_offset<<" width "<<L.width<<std::endl;
+
+    for(unsigned int i = 0; i < L.height; i++)
+    {
+        uint32_t data = reverseBits(L.data[i], L.width);
+        m_winzoneMap[i + y_offset] = data << x_offset;
+    }
+
+    for(int i = 0; i < width; i++)
+        for(int j = 0; j < height; j++)
+        {
+            if(checkBit(m_winzoneMap[j],i))
+            {
+                if(CM.isValid({i,j}))
+                    m_data[CM.mapID({i,j})] = WINZONE_ID;
+                m_winShapeCoords.push_back(Coord(i,j));
+            }
+        }
+
+    return;
+}
+
+bool GameBoard::isInWinShape(Coord C)
+{
+    return checkBit(m_winzoneMap[C.j], C.i);
+}
+
+int GameBoard::floodFill(Coord C, bool *visited)
+{
+    if(!CM.isValid(C)) return 0;
+    if(visited[CM.mapID(C)]) return 0;
+    int id = m_data[CM.mapID(C)];
+    if(id != WINZONE_ID) return 0;
+    visited[CM.mapID(C)] = true;
+
+    int ctr = 1;
+
+    Coord up(C.i, C.j-1);
+    Coord down(C.i, C.j+1);
+    Coord left(C.i-1, C.j);
+    Coord right(C.i+1, C.j);
+    ctr += floodFill(up,visited);
+    ctr += floodFill(down,visited);
+    ctr += floodFill(left,visited);
+    ctr += floodFill(right,visited);
+
+    return ctr;
+};
+
+//hmmm or just ... no id?
+void GameBoard::checkValidity()
+{
+    //a piece has been placed or picked up
+    //floodfill around...
+    //create a visited array?
+    bool visited[CM.sz()];
+    for(auto &b : visited) b = false;
+    //int areaSizes[8];
+
+    for(auto C : m_winShapeCoords)
+    {
+        int ctr = floodFill(C, visited);
+        if(ctr % 5 != 0)
+        {
+            isAValidPlacement = false;
+            return;
+        }
+    }
+    isAValidPlacement = true;
+    return;
+}
+
+/*
 void GameBoard::draw(Coord C)
 {
+    //m_impl->draw(C); ?
     if(!CM.isValid(C)) return;
 
     unsigned int id = m_data[CM.mapID(C)];
@@ -417,7 +576,7 @@ void GameBoard::draw(Coord C)
 
     if(won || isPlayground)
     {
-        hsl.saturation = 0.9f;//*= 1.35f;
+        hsl.saturation = 0.9f;// *= 1.35f;
         hsl.lightness = 0.6f;//1.f;
         //luminance = 0.6f;
     }
@@ -434,17 +593,9 @@ void GameBoard::draw(Coord C)
     //color = setLuminance(color, luminance);
     grid.setCellColor(C, color, true);
 }
-/*
-void GameBoard::run()
-{
-    while(window.isOpen())
-    {
-        handleEvents();
-        update();
-        render();
-    }
-}*/
+*/
 
+/*
 void GameBoard::handleEvent(const sf::Event &event)
 {
 //    sf::Event event;
@@ -549,137 +700,4 @@ void GameBoard::handleEvent(const sf::Event &event)
 
     }
 }
-
-void GameBoard::saveCoords()
-{
-    if(!p_selectedBlock) return;
-
-    Coord P = p_selectedBlock->defaultPos;
-    for(int i = 0; i < 5; i++)
-    {
-        lastCoords[i] = P + p_selectedBlock->coords[i];
-    }
-    blockWasMoved = true;
-}
-
-//toggle a switch.. on the grid...
-//toggle is if selected.
-//save it!
-void GameBoard::setWinShape(int lvl)
-{
-    //return;
-    //load the level
-    //srand(time(NULL));
-    //unsigned int r = rand()%9;//10;//rand()%Level::m_preLoadedLevels.size();//8;//7;//rand()%8;
-    //get a random level!
-    Level L(lvl);
-    //
-    window.setTitle(L.name);//FIND A BETTER PLACE TO PUT THIS LATER
-    if(L.name == "Playground") isPlayground = true;
-
-    int width = grid.getWidth();
-    int height = grid.getHeight();
-    int x_offset = (width - L.width)/2;
-    //x_offset = 32 - x_offset;
-    int y_offset = (height - L.height)/4 + 1;
-    std::cout<<"x_ofsset is "<<x_offset<<" width "<<L.width<<std::endl;
-    for(unsigned int i = 0; i < L.height; i++)
-    {
-        //flip the data ?
-        //read from width - 1 - i!
-        //for loop ?
-        uint32_t data = reverseBits(L.data[i], L.width);
-        /*
-        for(unsigned int k = 0; k < L.width; k++)
-        {
-            data = setBit(data, L.width - 1 - k, checkBit(L.data[i], k));
-        }*/
-        std::cout<< std::bitset<12>(data);
-        std::cout<< " ";
-        std::cout << std::bitset<12>(L.data[i]) << std::endl;
-        m_winzoneMap[i + y_offset] = data << x_offset;//L.data[i] << x_offset;
-    }
-
-    for(int i = 0; i < width; i++)
-        for(int j = 0; j < height; j++)
-        {
-            if(checkBit(m_winzoneMap[j],i))
-            {
-                //sf::Color color = blockColors[12];
-                //m_grid.setCellColor({i,j},color);
-                if(CM.isValid({i,j}))
-                    m_data[CM.mapID({i,j})] = WINZONE_ID;
-                m_winShapeCoords.push_back(Coord(i,j));
-            }
-        }
-
-    return;
-}
-/*
-void GameBoard::setWinShape()
-{
-    //int i, j;
-    
-    for(int i = 0; i < m_width; i++)
-        for(int j = 0; j < m_height; j++)
-        {
-            if(checkBit(m_winzoneMap[j],i))
-            {
-                sf::Color color = blockColors[12];
-                setCellColor({i,j},color);
-                m_data[mapID({i,j})].id = -1;
-                winShapeCoords.push_back(Coord(i,j));
-            }
-        }
-        
-}*/
-
-bool GameBoard::isInWinShape(Coord C)
-{
-    return checkBit(m_winzoneMap[C.j], C.i);
-}
-
-int GameBoard::floodFill(Coord C, bool *visited)
-{
-    if(!CM.isValid(C)) return 0;
-    if(visited[CM.mapID(C)]) return 0;
-    int id = m_data[CM.mapID(C)];
-    if(id != WINZONE_ID) return 0;
-    visited[CM.mapID(C)] = true;
-
-    int ctr = 1;
-
-    Coord up(C.i, C.j-1);
-    Coord down(C.i, C.j+1);
-    Coord left(C.i-1, C.j);
-    Coord right(C.i+1, C.j);
-    ctr += floodFill(up,visited);
-    ctr += floodFill(down,visited);
-    ctr += floodFill(left,visited);
-    ctr += floodFill(right,visited);
-
-    return ctr;
-};
-
-//hmmm or just ... no id?
-void GameBoard::checkValidity()
-{
-    //a piece has been placed or picked up
-    //floodfill around...
-    //create a visited array?
-    bool visited[CM.sz()];
-    for(auto &b : visited) b = false;
-    //int areaSizes[8];
-
-    for(auto C : m_winShapeCoords)
-    {
-        int ctr = floodFill(C, visited);
-        if(ctr % 5 != 0)
-        {
-            isAValidPlacement = false;
-            return;
-        }
-    }
-    isAValidPlacement = true;
-    return;
-}
+*/
