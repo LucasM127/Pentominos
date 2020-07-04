@@ -7,10 +7,22 @@
 #include "PlayGroundState.hpp"
 #include <iostream>
 #include <cassert>
-//16x9
-//goes weird if width ever exceeds 32 lol -> cause of winShape as uint32_t
-StateMgr::StateMgr() : m_grid(22,14,60.f)//m_grid(32,18,50.f)//m_grid(22,14,60.f)
+
+void PWindow::onCreate()
 {
+    setPosition({1920+(1920 - 1320)/2 , (1080 - 840)/2});
+}
+
+
+//Can think of welcome screen as a winzone map... set width/height/ same save file, with a title.
+//use a custom draw function for the textures is all!
+//then can center it on the screen better
+//16x9
+//1024 x 768
+//goes weird if width ever exceeds 32 lol -> cause of winShape as uint32_t
+StateMgr::StateMgr() : m_grid(22,14,64.f)//m_grid(32,18,50.f)//m_grid(24,32,32)// 
+{
+    //draw the grid with an offset?
     m_curGameState = nullptr;//???
     pOldState = nullptr;
     m_context.window = &m_window;
@@ -18,19 +30,39 @@ StateMgr::StateMgr() : m_grid(22,14,60.f)//m_grid(32,18,50.f)//m_grid(22,14,60.f
     m_context.board = &m_board;
     m_context.font = &m_font;
     m_context.texture = &m_texture;
+    m_context.levels = &m_levels;
 
     newStateWasRequested = true;
     nextState = EDIT;
     action = REPLACE;
+//is ok-ish
+
+//    float factor = 1080.f / m_grid.getSize().y;
+//    m_grid.create(22,14,m_grid.getCellSize()*factor);
 
     //set the window and grid sizes here... common to all states.
     int width = m_grid.getSize().x;
     int height = m_grid.getSize().y;
+
+//    m_grid.setOffset((1920-width)/2,(1080-height)/2);
+/*
+    std::vector<sf::VideoMode> modes = sf::VideoMode::getFullscreenModes();
+    for (std::size_t i = 0; i < modes.size(); ++i)
+{
+    sf::VideoMode mode = modes[i];
+    std::cout << "Mode #" << i << ": "
+              << mode.width << "x" << mode.height << " - "
+              << mode.bitsPerPixel << " bpp" << std::endl;
+}
+//modes[10]*/
+    //m_window.create(sf::VideoMode(1920,1080), "Pentominos", sf::Style::Fullscreen);
     m_window.create(sf::VideoMode(width, height), "Pentominos", sf::Style::Close);
+    //m_window.setPosition({1920+(1920 - width)/2 , (1080 - height)/2});
+    
 
     //load assets
     //TODO: TEST FOR LOADFAIL... what to do... abstract out?
-    m_texture.loadFromFile("Assets/TexAtlas.png");
+    m_texture.loadFromFile("Assets/TexAtlas.png");//Elephant.png");//
     m_font.loadFromFile("Assets/FreeSans.ttf");
 
     m_stateMapping[WELCOME] = [this](int x)->GameState*{return new WelcomeState(*this, m_context);};
@@ -143,10 +175,10 @@ void StateMgr::run()
             m_window.draw(fpsText);
             m_window.display();
 
-            numFrames++;
+            //numFrames++;
         }
 
-        //numFrames++;
+        numFrames++;
         sf::sleep(sf::milliseconds(1));
     }
 }

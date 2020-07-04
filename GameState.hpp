@@ -6,13 +6,25 @@
 #include <unordered_map>//map enum to new type...
 #include <functional>
 
+class PWindow : public sf::RenderWindow
+{
+private:
+    void onCreate() override;
+};
+
+//kinda like my globals
 struct Context
 {
     sf::RenderWindow *window;
     Grid *grid;
     GameBoard *board;
+    Controller *controller;
     sf::Font *font;
     sf::Texture *texture;
+    std::vector<Level> *levels;
+    //For coloring the gameboard pieces
+    std::vector<float> hues;
+    uint alpha;
 };
 
 enum STATE
@@ -81,11 +93,13 @@ private:
 
   // the stack of states
   GameState *m_curGameState;
+//  PWindow m_window;
   sf::RenderWindow m_window;
   Grid m_grid;
   GameBoard m_board;
   sf::Font m_font;
   sf::Texture m_texture;
+  std::vector<Level> m_levels;
 
   bool newStateWasRequested;
   STATE_ACTION action;//BETTER NAME PLEASE

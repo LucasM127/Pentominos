@@ -21,74 +21,75 @@ const unsigned int BACKGROUND_ID = 15;
 const unsigned int INVALID_ID = -1;
 
 //0x0F mask for id
-//0xF0 mask for location in shape...
+//0xF0 mask for location in shape..
 struct CellData
 {
-    uint8_t data;
+    uint8_t data;    
 };
+/*
+struct CellData
+{
+    union{
+    uint8_t data;
+    struct
+    {
+        uint8_t id : 4;
+        uint8_t subId : 4;
+    };
+    };
+};*/
 
-//uses the grid, but is not the grid
-//load the pieces and the level ... ???
-//is the World... LOGIC more so than the grid. -> hmmmmmmmmm
-//where can the pieces go?
-//where cant the pieces go?
-//Get the state of all of the pieces... etc...
-//dont even need the grid, - externalize draw would be nice
-//but to draw it, what do we need to do??? pass out a vector of updated coords
-
-//just change our draw function is all... need to be a gameboard to do that
-//inheritance! then need to cast and stuff
-//function pointers seems better
-class GameBoard
+struct GameBoard
 {
 public:
-    GameBoard();
-    ~GameBoard();
-    //void run();
-    void reset(uint w, uint h, int level);//-1 for a playground
-    void update();
-    void winUpdate();//call every time an event???
-    void handleEvent(const sf::Event &event);//no idea about spatial positioning, why?
-
-    const std::vector<Pentamino> &getBlocks(){return m_blocks;}
-    const std::vector<Coord> &getChangedCoords(){return m_updatedCoords;}
-    const std::vector<uint8_t> &getData(){return m_data;}
-    const std::vector<float> &getBlockHues(){return m_blockHues;}
-    const unsigned int getHoverId(){return idHover;}
-    const int blockAlpha(){return m_blockAlpha;}
-    //getSelectedPieceCoords()
-    Pentamino *getSelectedBlock(){return p_selectedBlock;}
-
-    void rotatePieceRight();
-    void rotatePieceLeft();
-    void flipPiece();
-    void movePiece(Coord C);
-    void pickUpOrPlacePiece();
-    void resetPiece();
-    bool isWon(){return won;}
-    bool isValid(){return isAValidPlacement;}//for drawing the winzone color -sigh-
-    bool isColliding(){return amColliding;}
+    GameBoard(){}
+    ~GameBoard(){}
+    void set(const CoordMapper &mapper, int level);//-1 for a playground
+    void setWinShape(int level);
+    int positionBlockInFreeSpot(Pentamino &block);
+    void pickupBlock(Pentamino &block);
+    void placeBlock(Pentamino &block);
     bool isInWinShape(Coord C);
-    bool piecePickedUpOrMoved(){return blockWasPickedUp || blockWasMoved;}
+    int floodFill(Coord C, bool *visited);
+    bool checkValidity();
+    int collides(Pentamino &block);
+    bool won();
+    Pentamino *getBlock(Coord C);
+    uint32_t get(Coord C);
 
-    CoordMapper CM;
-
-private:
-    int width, height;
-//    Grid &grid;
-
-    Coord mouseCoord;
-
-////ALL THIS BELOW IS GAMEBOARD_SPECIFIC
+    CoordMapper CM;//width height of the board
     std::vector<uint8_t> m_data;
-    std::vector<uint32_t> m_winzoneMap;//store in cell data...
-
-    Pentamino *p_selectedBlock;
-    bool amColliding;
+    std::vector<uint32_t> m_winzoneMap;
     std::vector<Pentamino> m_blocks;
+    std::vector<Coord> m_winShapeCoords;
+};
+
+struct DrawSettings;
+
+//manipulates the board// ie the Player
+//constant... for the game...
+//winzone effect controller??? no update events there... :/
+//should be able to just draw the board ... but
+//hover effects and the like - shit =
+class Controller
+{
+public:
+    Controller(GameBoard &_board, Grid &_grid);
+    void handleEvent(const sf::Event &event);
+    void draw(DrawSettings &S);
+private:
+    GameBoard &board;
+    Grid &grid;
+    Coord m_activeCoord;
+
     std::vector<Pentamino> m_startingBlocks;
-    std::vector<float> m_blockHues;//par ot the block?
     std::vector<Coord> m_updatedCoords;
+
+    Pentamino *p_activeBlock;
+    bool amColliding;
+    bool won;
+    bool winZoneIsValid;
+
     Coord lastCoords[5];
     Coord lastPos;
     bool blockWasMoved;
@@ -96,34 +97,37 @@ private:
     bool blockWasPickedUp;
     bool hoverChanged;
     int idLastHovered;
-    int m_blockAlpha;
-    
-    int positionBlockInFreeSpot(Pentamino &block);
-    void placeBlock(Pentamino &block);
-    void pickupBlock(Pentamino &block);
+    int idHover;
+
+    void rotatePieceRight();
+    void rotatePieceLeft();
+    void flipPiece();
+    void movePiece();
+    void setActive(Coord C);
+    void pickUpOrPlacePiece();
+    //void resetPiece();
     void saveCoords();
-    
-    unsigned int idHover;
-
-    bool won;
-
-    bool isAValidPlacement;
-    
-    void setWinShape();
-    void setWinShape(int lvl);
-    void checkValidity();
-    int floodFill(Coord C, bool *);
-    //win is if all pentaminos are in win shape.
-
-    std::vector<Coord> m_winShapeCoords;
-
-    //debug draw
-    //std::vector<sf::Text> idTexts;
-
-//    void draw(Coord C);//THIS CHANGES
-//    void drawBlock(Pentamino &block);
-
-    bool isPlayground;//hack
+    void update();
 };
+
+//then each ... just use the draw function with the struct!
+struct DrawSettings
+{
+public:
+    DrawSettings();
+    void draw(Coord C, Grid &grid, GameBoard &board,
+                unsigned int idHover = INVALID_ID,
+                bool winZoneValid = true);
+    std::vector<float> pieceHues;
+    int pieceAlphaTransparency;
+    float baseLightness;
+    float baseSaturation;
+    float winZoneSatEffect;
+    float winZoneLightEffect;
+    float hoverSatEffect;
+    float hoverLightEffect;
+};
+//winzone draw -> for each piece, draw as if idHover is different
+//redraw the 2 pieces
 
 #endif//GAMEBOARD_HPP
