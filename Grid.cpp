@@ -5,20 +5,34 @@
 bool renderTestBool;
 
 //this is a vertex mapper
-Grid::Grid(int width, int height, float cellSize)
-            : m_width(width), m_height(height), m_cellSize(cellSize), m_texMap(nullptr)
+Grid::Grid(unsigned int width, unsigned int height, float cellSize)
+            : m_cellSize(cellSize), m_texMap(nullptr), m_mapper(width, height)
 {
     srand(time(NULL));
     m_randSeed = rand();//hacky
 
     m_texSz = 128.f;
     
-    m_cellShapes.resize(m_width * m_height * 6);
-    for(int j = 0; j < m_height; ++j)
+    create(width, height, cellSize);
+
+    m_vbuffer.setPrimitiveType(sf::Triangles);
+    //test???
+    m_vbuffer.setUsage(sf::VertexBuffer::Dynamic);
+
+    m_x_offset = m_y_offset = 0.f;
+}
+
+void Grid::create(unsigned int width, unsigned int height, float cellSize)
+{
+    m_mapper.width = width;
+    m_mapper.height = height;
+    m_cellSize = cellSize;
+    m_cellShapes.resize(m_mapper.sz() * 6);
+    for(unsigned int j = 0; j < m_mapper.height; ++j)
     {
-        for(int i = 0; i < m_width; ++i)
+        for(unsigned int i = 0; i < m_mapper.width; ++i)
         {
-            uint cellID = mapID({i,j});
+            uint cellID = m_mapper.mapID({i,j});
             m_cellShapes[6 * cellID + 0].position = {i * m_cellSize, j * m_cellSize};
             m_cellShapes[6 * cellID + 1].position = {i * m_cellSize, (j+1) * m_cellSize};
             m_cellShapes[6 * cellID + 2].position = {(i+1) * m_cellSize, j * m_cellSize};
@@ -29,19 +43,15 @@ Grid::Grid(int width, int height, float cellSize)
         }
     }
 
-    m_vbuffer.setPrimitiveType(sf::Triangles);
-    //test???
-    m_vbuffer.setUsage(sf::VertexBuffer::Dynamic);
     m_vbuffer.create(m_cellShapes.size());
-    //update only if ... flag is set :)
     amModified = true;
 }
 
 void Grid::clear(sf::Color color)
 {
-    for(int j = 0; j < m_height; ++j)
+    for(unsigned int j = 0; j < m_mapper.height; ++j)
     {
-        for(int i = 0; i < m_width; ++i)
+        for(unsigned int i = 0; i < m_mapper.width; ++i)
         {
             setCellColor({i,j},color);
 //hmm???
@@ -65,17 +75,18 @@ void Grid::clear(sf::Color color)
 //and the texture rotation too ???
 void Grid::setCellColor(Coord C, sf::Color color, bool overlaps)
 {
-    if(!isValid(C)) return;
-    unsigned int id = mapID(C);
+    //if(!m_mapper.isValid(C))
+    if(!m_mapper.isValid(C)) return;
+    unsigned int id = m_mapper.mapID(C);
     id *= 6;
     
-    if(overlaps) color = alphaBlend(color, m_cellShapes[id].color);
+    if(overlaps) color = COLOR::alphaBlend(color, m_cellShapes[id].color);
     else //do the random thing here!
     {
         uint32_t seed = (m_randSeed & 0xFF) << 24 |(C.i & 0xFFF) << 12 | (C.j & 0xFFF);
         lsrand(seed);
         int variation = lrand()%16;
-        color = variate(color, variation);
+        color = COLOR::variate(color, variation);
     }
     for(int i = 0; i<6; i++) m_cellShapes[id+i].color = color;
 
@@ -84,8 +95,8 @@ void Grid::setCellColor(Coord C, sf::Color color, bool overlaps)
 
 void Grid::flip(Coord C)
 {
-    if(!isValid(C)) return;
-    unsigned int cellID = mapID(C);
+    if(!m_mapper.isValid(C)) return;
+    unsigned int cellID = m_mapper.mapID(C);
     m_cellShapes[6 * cellID + 1].texCoords = m_cellShapes[6 * cellID + 0].texCoords;
     m_cellShapes[6 * cellID + 0].texCoords = m_cellShapes[6 * cellID + 4].texCoords;
     m_cellShapes[6 * cellID + 4].texCoords = m_cellShapes[6 * cellID + 1].texCoords;
@@ -98,8 +109,8 @@ void Grid::flip(Coord C)
 //hmmmmmmmmm
 void Grid::rotateRight(Coord C)
 {
-    if(!isValid(C)) return;
-    unsigned int cellID = mapID(C);
+    if(!m_mapper.isValid(C)) return;
+    unsigned int cellID = m_mapper.mapID(C);
     sf::Vector2f temp = m_cellShapes[6 * cellID + 0].texCoords;
     m_cellShapes[6 * cellID + 0].texCoords = m_cellShapes[6 * cellID + 2].texCoords;
     m_cellShapes[6 * cellID + 2].texCoords = m_cellShapes[6 * cellID + 3].texCoords = m_cellShapes[6 * cellID + 5].texCoords;
@@ -109,8 +120,8 @@ void Grid::rotateRight(Coord C)
 
 void Grid::rotateLeft(Coord C)
 {
-    if(!isValid(C)) return;
-    unsigned int cellID = mapID(C);
+    if(!m_mapper.isValid(C)) return;
+    unsigned int cellID = m_mapper.mapID(C);
     sf::Vector2f temp = m_cellShapes[6 * cellID + 0].texCoords;
     m_cellShapes[6 * cellID + 0].texCoords = m_cellShapes[6 * cellID + 1].texCoords;
     m_cellShapes[6 * cellID + 1].texCoords = m_cellShapes[6 * cellID + 4].texCoords = m_cellShapes[6 * cellID + 5].texCoords;
@@ -120,8 +131,8 @@ void Grid::rotateLeft(Coord C)
 //random function here...
 void Grid::setCellTexture(Coord C, sf::Vector2f uv, sf::Vector2f sz, int orientation, bool isFlipped)
 {
-    if(!isValid(C)) return;
-    unsigned int cellID = mapID(C);
+    if(!m_mapper.isValid(C)) return;
+    unsigned int cellID = m_mapper.mapID(C);
 
     //0 - 4 and if is flipped ?
     switch (orientation)
@@ -195,6 +206,9 @@ void Grid::render(sf::RenderTarget &target)
 {
     sf::RenderStates states;
     states.texture = m_texMap;
+    sf::Transform T;
+    T.translate(m_x_offset,m_y_offset);
+    states.transform = T;
 //just tinyest bit faster !
 #ifndef VBUFFER
     if(amModified)
@@ -215,6 +229,7 @@ void Grid::render(sf::RenderTarget &target)
 //if get coord from here... only, is invalid if get anywhere else!
 Coord Grid::getCoordinate(const sf::Vector2f &pos)
 {
-    return Coord(   pos.x / m_cellSize,
-                    pos.y / m_cellSize);
+    
+    return Coord(   (pos.x - m_x_offset) / m_cellSize,
+                    (pos.y - m_y_offset) / m_cellSize);
 }

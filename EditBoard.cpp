@@ -18,7 +18,7 @@ void setGridCoordTexBasedOnDataAtCoord(Grid &grid, std::vector<uint32_t> &data, 
 
     auto checkCoord = [&](Coord x)->bool
     {
-        if(!grid.isValid(x))
+        if(!grid.getMapper().isValid(x))
             return false;
         return checkBit(data[x.j], x.i);
     };
@@ -100,19 +100,25 @@ void setGridCoordTexBasedOnDataAtCoord(Grid &grid, std::vector<uint32_t> &data, 
         }
     }
 
+    bool isBG = false;
     if(!checkCoord(C))
     {
+        isBG = true;
         texId = BACKGROUND_TEXTURE;
-        orientation = rots[0];//rand()%4];
     }//assumed??? lol
 
     //set the grid texture accordingly...
     int x_off = texId%4;
     int y_off = texId/4;
     sf::Vector2f uvpos(128.f * (float)x_off, 128.f * (float)y_off);
-    grid.setCellTexture(C, uvpos, {128.f, 128.f}, orientation, false);
+    if(isBG) grid.setCellTexture(C, uvpos, {128.f,128.f});
+    else
+        grid.setCellTexture(C, uvpos, {128.f, 128.f}, orientation, false);
 }
 
+//I read it in -> and need to center it on the screen!
+//read in width, height, and then the numbers.
+//And the title too!
 EditBoard::EditBoard(StateMgr &mgr, Context &context)
     : GameState(mgr, context)
 {
@@ -208,6 +214,21 @@ void EditBoard::save()
 {
     {
     std::ofstream file("foo", std::ios::out | std::ios::binary);
+
+    //simply copies a block of data "write(const char* s, streamsize n)" pointed to at s without checking contents, for size n
+    //istream& read (char* s, streamsize n); is the reverse!
+    //Not GOod for the title Though! that is variably sized "A" or "The letter 'A'"
+    //probably best to use getLine() for that to a string.
+    //Title line
+    //line for the data -> newline
+    //and so on...
+    //manipulation checking??? how???
+    //can have a hash and a hash file , and if they dont match that's that.  :~/
+    //Load a backup just in case.
+    //User Created Levels
+    //In Game Levels
+    //Load(lvls) function (lol)
+    
     for(auto &i : m_data) file.write((char*)&i, sizeof(uint32_t));
     file.close();
     }/*

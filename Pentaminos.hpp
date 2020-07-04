@@ -34,6 +34,21 @@ enum TexAtlasID : uint8_t
     EMPTY
 };
 
+//hmmm????
+//TexAtlas.mapTexture()
+
+inline sf::Vector2f getTextureUV(TexAtlasID texId)
+{
+    int x_off = texId%4;
+    int y_off = texId/4;
+    return sf::Vector2f(128.f * (float)x_off, 128.f * (float)y_off);
+}
+
+inline sf::Vector2f getTextureSize()
+{
+    return sf::Vector2f(128.f, 128.f);
+}
+
 //Wikipedias naming convention
 //https://en.wikipedia.org/wiki/Pentomino#/media/File:Pentomino_Naming_Conventions.svg
 enum PentaminoShape : int

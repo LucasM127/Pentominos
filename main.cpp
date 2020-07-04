@@ -7,6 +7,20 @@
 
 int main()
 {
+    /*
+    //hmm
+    std::ofstream file("Assets/Levels");
+    if(!file) throw;
+    for(auto &lvl : Level::m_preLoadedLevels)
+    {
+        saveLevel(file, lvl);
+    }
+    file.close();
+    */
+   std::cout<<sizeof(Level)<<std::endl;
+   //std::cout<<sizeof(uint8_t)<<std::endl;
+   //saveMyPreloadedLevels();
+
     StateMgr mgr;
     mgr.run();
     /*

@@ -3,6 +3,9 @@
 
 #include <SFML/Graphics.hpp>
 
+namespace COLOR
+{
+
 struct HSL
 {
     float hue;
@@ -32,5 +35,7 @@ sf::Color variate(sf::Color color, int amount);
 sf::Color setValue(sf::Color color, int v);
 
 sf::Color randColor();
+
+}//namespace COLOR
 
 #endif

@@ -1,5 +1,8 @@
 #include "Colors.hpp"
 
+namespace COLOR
+{
+
 //https://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
 
 sf::Color fromHSL(HSL hsl)
@@ -147,3 +150,5 @@ sf::Color randColor()
 {
     return sf::Color(rand()%256,rand()%256,rand()%256);
 }
+
+}//namespace COLOR

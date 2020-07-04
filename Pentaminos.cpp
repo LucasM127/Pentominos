@@ -200,7 +200,7 @@ sf::Vector2f Pentamino::textureOffsets[12] =
 
 
 //5 x 5 grid address space...
-void transformAddress(int n, int &ci, int &cj, Orientation rot, bool isFlipped)
+void transformAddress(int n, unsigned int &ci, unsigned int &cj, Orientation rot, bool isFlipped)
 {
     if(isFlipped) n = n + ((n % 3) - 1) * -2;
     

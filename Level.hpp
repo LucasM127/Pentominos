@@ -33,6 +33,7 @@ struct FileInfoFooter
     char hash[32];
 };
 
+//optionally may be a set of 'pieces' too
 struct Level
 {
     Level();
