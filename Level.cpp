@@ -4,7 +4,9 @@
 #include <sstream>
 #include <cstring>
 
-std::vector<Level> Level::m_levels;
+#include <iostream>
+
+//std::vector<Level> Level::m_levels;
 
 /*
 //128 bytes at a time
@@ -34,42 +36,65 @@ void saveLevel(std::ofstream &file, const Level &level)
     file.write((char*)&L, sizeof(LevelData));
 }
 
-Level::Level(const LevelData &L)
+Level::Level(const Level &level)
 {
-    name.reserve(L.nameLength);
-    memcpy(&name[0], L.name, L.nameLength * sizeof(char));
-    width = L.width;
-    height = L.height;
-    data.reserve(height);
-    memcpy(&data[0], L.data, sizeof(uint32_t) * height);
+    std::cout<<"Copy constructor lvl "<<level.name<<std::endl;
+    name = level.name;
+    width = level.width;
+    height = level.height;
+    data = level.data;
 }
 
-std::vector<Level> loadLevels(const std::string &fileName)
+Level::Level(const LevelData &L)
+: name(L.name, L.nameLength), width(L.width), height(L.height), data(L.data, L.data + height)
+{}
+
+Folder::Folder(const std::string &fileName) : name(fileName)
 {
-    std::ifstream file("Assets/" + fileName);
-    if(!file) throw std::runtime_error(fileName + " not found");
+    load();
+}
+
+Folder::~Folder()
+{
+    save();
+}
+
+//std::vector<Level> loadLevels(const std::string &fileName)
+void Folder::load()
+{
+    std::ifstream file("Assets/Levels/" + name + ".lvl");
+    if(!file) throw std::runtime_error(name + " not found");
     FileInfoHeader FH;
     file.read((char*)&FH, sizeof(FH));
+    if(FH.fileInfoHeaderSize != sizeof(FH))
+        throw std::runtime_error("File info header not right size");
+    //just in case want to change the headers, for backwards compatibility
     
-    std::vector<Level> levels;
-
+//    std::vector<Level> levels;
+    levels.clear();
+    levels.reserve(FH.numLevels);
+    
     LevelData L;
     for(auto i = 0; i < FH.numLevels; ++i)
     {
         file.read((char*)&L, sizeof(LevelData));
-        if(!file) throw std::runtime_error("Unable to read in level");
-        levels.emplace_back(L);
+        if(!file) throw std::runtime_error("Unable to read in level " + name);
+        levels.emplace_back(L);//???
+        //levels.emplace_back(Level(L));
+        //levels[i](Level(L));//copy construct???
     }
 
-    return levels;
+//    return levels;
 }
 
-void saveLevels(const std::vector<Level> &levels, const std::string &fileName)
+//void saveLevels(const std::vector<Level> &levels, const std::string &fileName)
+void Folder::save()
 {
-    std::ofstream file("Assets/" + fileName);
-    if(!file) throw std::runtime_error("Unable to write to " + fileName);
+    std::ofstream file("Assets/Levels/" + name + ".lvl");
+    if(!file) throw std::runtime_error("Unable to write to " + name);
     
     FileInfoHeader FH;
+    FH.fileInfoHeaderSize = sizeof(FH);
     FH.numLevels = levels.size();
     file.write((char*)&FH, sizeof(FH));
 
@@ -80,17 +105,111 @@ void saveLevels(const std::vector<Level> &levels, const std::string &fileName)
     file.close();
 }
 
-Level::Level() : width(0), height(0), data() {}
+//Level::Level() : width(0), height(0), data() {}
 
 Level::Level(const std::string &s, unsigned int w, unsigned int h, std::vector<uint32_t> d)
             : name(s), width(w), height(h), data(d)
 {}
-
+/*
 Level::Level(unsigned int id) : Level(id < m_preLoadedLevels.size() ?
                             m_preLoadedLevels[id] :
                             m_preLoadedLevels[0])
-{}
+{}*/
 
+const Level Level::emptyLevel = 
+{
+    "Pentominos",
+    0,
+    0,
+    {}
+};
+
+const Level Level::m_icons[4] = 
+{
+{
+    "Create Level",
+    8,
+    8,
+    {
+    0b00011000,
+    0b00011000,
+    0b00011000,
+    0b11111111,
+    0b11111111,
+    0b00011000,
+    0b00011000,
+    0b00011000,
+    }
+},
+{
+    "Change Folders",
+    10,
+    10,
+    {
+    0b0000111111,
+    0b0000000001,
+    0b0011111101,
+    0b0000000101,
+    0b1111110101,
+    0b1111110101,
+    0b1111110100,
+    0b1111110100,
+    0b1111110000,
+    0b1111110000,
+    }
+},
+{
+    "Create Folder",
+    10,
+    10,
+    {
+    0b0000111111,
+    0b0000000001,
+    0b0011111101,
+    0b0000011101,
+    0b0011011101,
+    0b0011000101,
+    0b1111110100,
+    0b1111110100,
+    0b0011000000,
+    0b0011000000,
+    }
+},
+{
+    "Unknown",
+    8,
+    10,
+    {
+    0b01111110,
+    0b11111111,
+    0b11000011,
+    0b11000011,
+    0b00000111,
+    0b00011110,
+    0b00011000,
+    0b00000000,
+    0b00011000,
+    0b00011000,
+    }
+}
+/*
+{
+    "Unknown",
+    8,
+    8,
+    {
+    0b10000001,
+    0b01000010,
+    0b00100100,
+    0b00011000,
+    0b00011000,
+    0b00100100,
+    0b01000010,
+    0b10000001,
+    }
+}*/
+};
+/*
 const std::vector<Level> Level::m_preLoadedLevels = 
 {
 {
@@ -346,6 +465,7 @@ const std::vector<Level> Level::m_preLoadedLevels =
     }
 }
 };
+*/
 /*
 {
     10,

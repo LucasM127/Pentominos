@@ -18,12 +18,15 @@ struct LevelData
 //45 chars wide //can store as utf 8...
 //can fit 32 levels in a file, set all to -1 at the beginning! //fill with FF
 //fill 128 bytes for file size 4096 just because it is cool and I am bored and don't want to finish this game
-struct FileInfoHeader//62 bytes for the level info
+struct FileInfoHeader//4 bytes for the level info
 {//load the vector into memory
 //stays in memory
 //rewrite it out (if modified) again, use std::swap and shit
 //so don't worry . let the computer worry
-    uint8_t numLevels;//up to 256 levels in a file
+    uint16_t fileInfoHeaderSize;//size of the header... future modifications, may require different stuffs here
+    uint8_t numLevels;//up to 256 levels in a file TONS
+    //uint8_t filler;//32 byte struct
+    //filler!!!!
 };//4096
 
 //am I modified???
@@ -34,22 +37,37 @@ struct FileInfoFooter
 };
 
 //optionally may be a set of 'pieces' too
+//move consructo???
 struct Level
 {
-    Level();
+    Level(const Level &level);//Level &&level);
+    //Level();
     Level(const std::string &s, unsigned int width, unsigned int height, std::vector<uint32_t> data);
-    Level(unsigned int id);
+    //Level(unsigned int id);
     Level(const LevelData &L);
     std::string name;
     unsigned int width, height;
     std::vector<uint32_t> data;//unconstified!!!
 //private:
-    static const std::vector<Level> m_preLoadedLevels;
-    static std::vector<Level> m_levels;
+//    static const std::vector<Level> m_preLoadedLevels;
+//    static std::vector<Level> m_levels;
+    static const Level m_icons[4];
+    static const Level emptyLevel;
 };
 
-std::vector<Level> loadLevels(const std::string &fileName);//to do test rvo??? return value optimization
-void saveLevels(const std::vector<Level> &levels);
+struct Folder
+{
+    Folder(const std::string &fileName);//load
+    ~Folder();//save
+    Folder(const Folder&) = delete;
+    std::vector<Level> levels;
+    const std::string name;
+    void save();
+    void load();
+};
+
+//std::vector<Level> loadLevels(const std::string &fileName);//to do test rvo??? return value optimization
+//void saveLevels(const std::vector<Level> &levels, const std::string &fileName);
 void saveLevel(std::ofstream &file, const Level &level);
 Level readLevel(std::ifstream &file);
 
