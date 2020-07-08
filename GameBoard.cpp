@@ -24,7 +24,7 @@
 
 #include <bitset>
 
-void GameBoard::set(const CoordMapper &mapper, int lvl)
+void GameBoard::set(const CoordMapper &mapper, const Level &level)//int lvl)
 {
     m_winzoneMap.clear();
     m_winShapeCoords.clear();
@@ -37,7 +37,7 @@ void GameBoard::set(const CoordMapper &mapper, int lvl)
     m_data.resize(CM.sz(), BACKGROUND_ID);
 
     m_winzoneMap.resize(height, 0);
-    setWinShape(lvl);
+    setWinShape(level);
 
     {//Function randomly places blocks without overlap
     int numTriesToPlace = 0;
@@ -88,21 +88,21 @@ int GameBoard::positionBlockInFreeSpot(Pentamino &block)
     return numTriesToPlace;
 }
 
-void GameBoard::setWinShape(int lvl)
+void GameBoard::setWinShape(const Level &level)//int lvl)
 {
     //load the level
-    if(lvl == -1) return;
-    Level L(lvl);//Level::m_levels[lvl]);//(lvl);//unless I just make it global again ?
+//    if(lvl == -1) return;
+//    Level L(lvl);//Level::m_levels[lvl]);//(lvl);//unless I just make it global again ?
     unsigned int width = CM.width;
     unsigned int height = CM.height;
 
-    int x_offset = (width - L.width)/2;
-    int y_offset = (height - L.height)/4 + 1;
-    std::cout<<"x_ofsset is "<<x_offset<<" width "<<L.width<<std::endl;
+    int x_offset = (width - level.width)/2;
+    int y_offset = (height - level.height)/4 + 1;
+    std::cout<<"x_ofsset is "<<x_offset<<" width "<<level.width<<std::endl;
 
-    for(unsigned int i = 0; i < L.height; i++)
+    for(unsigned int i = 0; i < level.height; i++)
     {
-        uint32_t data = reverseBits(L.data[i], L.width);
+        uint32_t data = reverseBits(level.data[i], level.width);
         m_winzoneMap[i + y_offset] = data << x_offset;
     }
 

@@ -44,8 +44,8 @@ struct GameBoard
 public:
     GameBoard(){}
     ~GameBoard(){}
-    void set(const CoordMapper &mapper, int level);//-1 for a playground
-    void setWinShape(int level);
+    void set(const CoordMapper &mapper, const Level &level);//int level);//-1 for a playground
+    void setWinShape(const Level &level);//int level);
     int positionBlockInFreeSpot(Pentamino &block);
     void pickupBlock(Pentamino &block);
     void placeBlock(Pentamino &block);
