@@ -19,8 +19,14 @@ public:
 private:
     //bunch of texts
     sf::Text m_folderText;
-    std::vector<Level> &levels;
+    std::vector<Level> *p_levels;
     std::vector<Icon> m_icons;//yay! -> more really need a name, and winzone map
     uint idSelected, idLastSelected;
-    const uint ID_CREATE, ID_SWITCHFOLDER;
+    enum : unsigned int
+    {
+        ID_CREATELEVEL = 0,
+        ID_CREATEFOLDER,
+        ID_SWITCHFOLDER,
+        NUM_ICONS
+    };
 };

@@ -5,6 +5,8 @@
 
 #include <iostream>
 
+//right click to rename???
+
 void MenuState::Icon::set(const Level &level, sf::Font &font)
 {
     sf::Image image;
@@ -23,7 +25,7 @@ void MenuState::Icon::set(const Level &level, sf::Font &font)
     }
 
     texture.loadFromImage(image);
-
+//should maybe have a default texture in case it takes long to load a texture ?????
     sprite.setTexture(texture);
     sprite.setOrigin(12.f,12.f);
     sprite.scale(128.f/24.f,128.f/24.f);
@@ -44,7 +46,7 @@ bool MenuState::Icon::isHovered(const sf::Vector2f &mousePos)
 }
 
 MenuState::MenuState(StateMgr &mgr, Context &context)
-    : GameState(mgr, context), levels(*context.levels), ID_CREATE(0), ID_SWITCHFOLDER(1)
+    : GameState(mgr, context), p_levels(context.levels)
 {
     sf::Clock clock;
 
@@ -53,18 +55,19 @@ MenuState::MenuState(StateMgr &mgr, Context &context)
     idSelected = -1;
     grid.clear(sf::Color::Black);
 
-    levels = Level::m_preLoadedLevels;
-
-    m_icons.resize(levels.size());//re-allocates and throws the textures out of scope if pushback or emplace back
-    for(size_t i = 0; i < levels.size(); ++i)
+    m_icons.resize(p_levels->size() + NUM_ICONS);//re-allocates and throws the textures out of scope if pushback or emplace back
+    m_icons[ID_CREATELEVEL].set(Level::m_icons[0], *context.font);
+    m_icons[ID_CREATEFOLDER].set(Level::m_icons[2], *context.font);
+    m_icons[ID_SWITCHFOLDER].set(Level::m_icons[1], *context.font);
+    for(size_t i = 0; i < p_levels->size(); ++i)
     {
-        m_icons[i].set(levels[i], *context.font);
+        m_icons[i+NUM_ICONS].set((*p_levels)[i], *context.font);
     }
     
     //position
     for(unsigned int i = 0; i < m_icons.size(); ++i)
     {
-        float sz = grid.getCellSize();
+        float sz = grid.getCellSize().x;
         float x_pos = 2*sz + 3*sz * (i%7);
         float y_pos = 2*sz + 3*sz * (i/7);
         m_icons[i].sprite.setPosition(x_pos, y_pos);
@@ -73,9 +76,9 @@ MenuState::MenuState(StateMgr &mgr, Context &context)
 
     {
         m_folderText.setFont(*context.font);
-        m_folderText.setCharacterSize((unsigned int)grid.getCellSize());
+        m_folderText.setCharacterSize((unsigned int)grid.getCellSize().y);
         m_folderText.setFillColor(sf::Color::White);
-        m_folderText.setString("Default Levels");
+        m_folderText.setString(context.levelFileName);//"Default Levels");
         float width = m_folderText.getLocalBounds().width;
         m_folderText.setOrigin(width/2.f,0.f);
         m_folderText.setPosition(grid.getSize().x/2.f + grid.getOffset().x,0.f);
@@ -106,7 +109,7 @@ void MenuState::handleEvent(const sf::Event &event)
         {
             if(idSelected != INVALID_ID)
             {
-                if(idSelected == ID_CREATE)
+                if(idSelected == ID_CREATELEVEL || idSelected == ID_CREATEFOLDER)
                     m_icons[idSelected].sprite.setColor(sf::Color::Red);
                 else if(idSelected == ID_SWITCHFOLDER)
                     m_icons[idSelected].sprite.setColor(sf::Color::Yellow);
@@ -126,16 +129,45 @@ void MenuState::handleEvent(const sf::Event &event)
     {
         if(idSelected != INVALID_ID)
         {
-            if(idSelected < 2)//add or remove???
+            if(idSelected < NUM_ICONS)//add or remove???
             {
-                if(idSelected == ID_SWITCHFOLDER);
-                if(idSelected == ID_CREATE)
-                    PGUI::TextBox textbox(window, L"Enter Level Name...", font, [](){;});
-                requestStateChange(PLAYGROUND);
+                if(idSelected == ID_SWITCHFOLDER)
+                {
+                    PGUI::ListBox listbox(window, "List contents", font, *p_levels, "SDLFJKKL");
+                    PGUI::MSG ret = listbox.run();
+                    if(ret == PGUI::MSG::LIST_ITEM_CHOSE)
+                    {
+                        std::cout<<"Item chosen was: "<<(*p_levels)[listbox.getChosenId()].name<<std::endl;
+                    }
+                }
+                if(idSelected == ID_CREATELEVEL)
+                    requestStateChange(PLAYGROUND);
+                if(idSelected == ID_CREATEFOLDER)
+                {
+                    PGUI::TextBox textbox(window, L"Enter Folder Name", "", font);
+                    PGUI::MSG ret = textbox.run();
+                }
             }
             else
             {
-                requestStateChange(PLAY, idSelected);
+                if(event.mouseButton.button == sf::Mouse::Right)
+                {
+                    PGUI::TextBox textbox(window, L"Rename level", (*p_levels)[idSelected-NUM_ICONS].name, font);//, [&]()->void{name = textbox.getString();});
+                    PGUI::MSG ret = textbox.run();
+                    //?
+                    if(ret == PGUI::MSG::TEXT_CHANGED)
+                    {
+                        (*p_levels)[idSelected-NUM_ICONS].name = textbox.getString();
+                        saveLevels(*p_levels, m_folderText.getString());
+                    }
+                    if(ret == PGUI::MSG::DELETE)
+                    {
+                        p_levels->erase(p_levels->begin() + (idSelected-NUM_ICONS));
+                        saveLevels(*p_levels, m_folderText.getString());
+                    }
+                }
+                else
+                requestStateChange(PLAY, idSelected - NUM_ICONS);
             }
             
         }

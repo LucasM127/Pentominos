@@ -14,10 +14,11 @@
 //how can that work?
 
 PlayGroundState::PlayGroundState(StateMgr &mgr, Context &context)
-    : GameState(mgr, context), board(*context.board), m_controller(board,grid)
+    : GameState(mgr, context), board(*context.board), m_controller(board,grid), levels(*context.levels), levelFileName(context.levelFileName)
 {
     LOG("Created PlayGroundState");
-    board.set(grid.getMapper(), -1);
+    board.set(grid.getMapper(), Level::emptyLevel);//set to be with no winzone Level at all...
+    context.window->setTitle(Level::emptyLevel.name);
 
     m_drawSettings.baseLightness = 0.6f;
     m_drawSettings.baseSaturation = 0.9f;
@@ -31,11 +32,30 @@ PlayGroundState::PlayGroundState(StateMgr &mgr, Context &context)
         }
 
     //buttons?
+    {
     unsigned int width = grid.getMapper().width;
     unsigned int height = grid.getMapper().height;
     exit.set(width - 2 , width - 1, height - 1, height - 1);
     exit.color = COLOR::brighten(sf::Color(255,0,0,128), 0.8f);//1.25
     isHovered = false;
+
+    grid.setCellColor({width-1, 0}, sf::Color::White);
+    grid.setCellTexture({width-1, 0}, getTextureUV(EMPTY), getTextureSize(), Orientation::DEFAULT, false);
+    }
+    {
+    ////////////
+    m_text.setFont(*context.font);
+    m_text.setString("Press [S] to save or [Q] to quit");//"Keep Trying...");
+    //from here
+    m_text.setCharacterSize(32);
+    float textWidth = m_text.getGlobalBounds().width;
+    float width = window.getSize().x;
+    float height = window.getSize().y;
+    m_text.setPosition((width - textWidth)/2.f, height - 100.f);
+    //to here like winstate if i like?
+    m_text.setFillColor(sf::Color(128,128,128,128));//::Green);
+    ///////////
+    }
 }
 
 PlayGroundState::~PlayGroundState(){}
@@ -60,8 +80,8 @@ void PlayGroundState::handleEvent(const sf::Event &event)
         case sf::Keyboard::Space:
             requestStateChange(MENU);
             break;
-        case sf::Keyboard::P://printout the thing!
-            //foo();
+        case sf::Keyboard::S://printout the thing!
+            save();
             break;
         default:
             break;
@@ -100,7 +120,62 @@ void PlayGroundState::update()
 void PlayGroundState::render()
 {
     grid.render(window);
-    //window.draw(m_text);
+    if(isHovered) window.draw(m_text);
+}
+
+void PlayGroundState::save()
+{
+    std::string name;
+    PGUI::TextBox textbox(window, L"Save level as...", "", font);//, [&](){name = textbox.getString();});
+    PGUI::MSG ret = textbox.run();
+    if(ret != PGUI::MSG::TEXT_CHANGED) return;
+    name = textbox.getString();
+
+    const std::vector<uint8_t> &data = board.m_data;
+    CoordMapper &CM = board.CM;
+
+    //for each line...
+    //print out the numbers!
+    std::vector<uint32_t> map;
+    unsigned int min_i = CM.width;
+    unsigned int max_i = 0;
+    for(unsigned int j = 0; j<CM.height; j++)
+    {
+        uint32_t k = 0;//the key lol
+        for(unsigned int i = 0; i < CM.width; i++)
+        {
+            k = k << 1;//0 = 0 for first iteration no worries
+            if((data[CM.mapID({i,j})]&0x0F) < 12)//or use a function??? inline probs
+            {
+                if(i < min_i) min_i = i;
+                if(i > max_i) max_i = i;
+                k |= 1;
+            }
+        }
+        map.push_back(k);
+    }
+    while (map.front() == 0)
+        map.erase(map.begin());
+//        map.pop_front();
+    while (map.back() == 0)
+        map.pop_back();
+    for(auto &n : map)
+        n = n >> (CM.width - max_i - 1);
+
+    for(auto n : map)
+        std::cout<<n<<std::endl;
+    std::cout<<"min max i : "<<min_i<<" "<<max_i<<std::endl;
+    uint width = max_i - min_i + 1;//indice inclusive
+    uint height = map.size();
+    std::cout<<"width "<<width<<" height "<<height<<std::endl;
+    //std::cout<<"min max j : "<<min_j<<" "<<max_j<<std::endl;
+    //yay
+    //Now I can save this to a level?  Hmmmmmm
+    levels.emplace_back(name,width,height,map);
+    //save to file
+    saveLevels(levels, levelFileName);
+
+    //save to its name!
 }
 
 /***

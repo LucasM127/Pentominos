@@ -18,13 +18,11 @@ struct Context
     sf::RenderWindow *window;
     Grid *grid;
     GameBoard *board;
-    Controller *controller;
     sf::Font *font;
     sf::Texture *texture;
-    std::vector<Level> *levels;
-    //For coloring the gameboard pieces
-    std::vector<float> hues;
-    uint alpha;
+    std::vector<Level> *levels;//point to loaded levels on the stack
+    //should it carry it's name inside too????
+    std::string levelFileName;
 };
 
 enum STATE
@@ -90,16 +88,13 @@ public:
     friend void GameState::requestStatePop();
     friend GameState *GameState::getPushedState();
 private:
-
-  // the stack of states
   GameState *m_curGameState;
-//  PWindow m_window;
   sf::RenderWindow m_window;
   Grid m_grid;
   GameBoard m_board;
   sf::Font m_font;
   sf::Texture m_texture;
-  std::vector<Level> m_levels;
+  std::vector<Level> *m_levels;
 
   bool newStateWasRequested;
   STATE_ACTION action;//BETTER NAME PLEASE

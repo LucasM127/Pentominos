@@ -8,6 +8,8 @@
 #include <iostream>
 #include <cassert>
 
+//#include <X11/Xlib.h>
+
 void PWindow::onCreate()
 {
     setPosition({1920+(1920 - 1320)/2 , (1080 - 840)/2});
@@ -20,17 +22,23 @@ void PWindow::onCreate()
 //16x9
 //1024 x 768
 //goes weird if width ever exceeds 32 lol -> cause of winShape as uint32_t
-StateMgr::StateMgr() : m_grid(22,14,64.f)//m_grid(32,18,50.f)//m_grid(24,32,32)// 
+StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32,32)// 
 {
     //draw the grid with an offset?
     m_curGameState = nullptr;//???
     pOldState = nullptr;
+
+    m_levels = new std::vector<Level>;
+    m_context.levelFileName = "Default";
+    *m_levels = loadLevels(m_context.levelFileName);
+    
+//hope it won't throw...!
     m_context.window = &m_window;
     m_context.grid = &m_grid;
     m_context.board = &m_board;
     m_context.font = &m_font;
     m_context.texture = &m_texture;
-    m_context.levels = &m_levels;
+    m_context.levels = m_levels;
 
     newStateWasRequested = true;
     nextState = EDIT;
@@ -56,9 +64,19 @@ StateMgr::StateMgr() : m_grid(22,14,64.f)//m_grid(32,18,50.f)//m_grid(24,32,32)/
 }
 //modes[10]*/
     //m_window.create(sf::VideoMode(1920,1080), "Pentominos", sf::Style::Fullscreen);
-    m_window.create(sf::VideoMode(width, height), "Pentominos", sf::Style::Close);
-    //m_window.setPosition({1920+(1920 - width)/2 , (1080 - height)/2});
-    
+    //position it somewhere else???
+    //with x11???
+    //::Display *display;
+    //::Window win = XCreateSimpleWindow(display, RootWindow(display, DefaultScreen(display)), 0,0, 0, 0, 0, 0,0);
+    //HACK to prevent 'jump'
+    m_window.create(sf::VideoMode(1, 1), "Pentominos", sf::Style::Close);
+    //m_window.create(sf::VideoMode(width, height), "Pentominos", sf::Style::Close);
+    m_window.setPosition({1920+(1920 - width)/2 , (1080 - height)/2});//hmmmm
+    m_window.setSize({width,height});
+    sf::View view;
+    view.setCenter(width/2, height/2);
+    view.setSize(width, height);
+    m_window.setView(view);
 
     //load assets
     //TODO: TEST FOR LOADFAIL... what to do... abstract out?
@@ -71,7 +89,6 @@ StateMgr::StateMgr() : m_grid(22,14,64.f)//m_grid(32,18,50.f)//m_grid(24,32,32)/
     m_stateMapping[EDIT] = [this](int x)->GameState*{return new EditBoard(*this, m_context);};
     m_stateMapping[PLAYGROUND] = [this](int x)->GameState*{return new PlayGroundState(*this, m_context);};
     m_stateMapping[WIN] = [this] (int x)->GameState*{return new WinState(*this, m_context, (WINSTATETYPE)x);};//How to send additional DATA?
-
 }
 
 StateMgr::~StateMgr()
