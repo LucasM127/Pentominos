@@ -15,19 +15,16 @@ struct LevelData
     uint8_t width, height;
     uint32_t data[16];
 };
-//45 chars wide //can store as utf 8...
+//45 chars wide //can store as utf 8... if can figure out clipboard
 //can fit 32 levels in a file, set all to -1 at the beginning! //fill with FF
 //fill 128 bytes for file size 4096 just because it is cool and I am bored and don't want to finish this game
 struct FileInfoHeader//4 bytes for the level info
 {//load the vector into memory
-//stays in memory
-//rewrite it out (if modified) again, use std::swap and shit
-//so don't worry . let the computer worry
+
     uint16_t fileInfoHeaderSize;//size of the header... future modifications, may require different stuffs here
     uint8_t numLevels;//up to 256 levels in a file TONS
-    //uint8_t filler;//32 byte struct
-    //filler!!!!
-};//4096
+    //filler!!!! 32bits at the moment from padding
+};
 
 //am I modified???
 //is an option... or save it separately

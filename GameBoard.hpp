@@ -1,17 +1,6 @@
 #ifndef GAMEBOARD_HPP
 #define GAMEBOARD_HPP
 
-//States of gameboard ???
-//or something
-//common functions, different defines
-//playground, -> list of pieces, (yes), winzone (no), draw pieces brighter
-//common pieces here
-//Playing -> list of pieces (yes), winzone (yes), draw dimmer
-//Won -> list of pieces (yes) winzone (yes), no input just do fancy win effects
-//Menu/Intro screen -> no list of pieces just the bg grid
-
-//state, -> different base ingredients, and then custom crap in between
-
 #include "Pentaminos.hpp"
 #include "Level.hpp"
 #include "Grid.hpp"
@@ -52,12 +41,12 @@ public:
     bool isInWinShape(Coord C);
     int floodFill(Coord C, bool *visited);
     bool checkValidity();
-    int collides(Pentamino &block);
+    bool collides(Pentamino &block);
     bool won();
     Pentamino *getBlock(Coord C);
     uint32_t get(Coord C);
 
-    CoordMapper CM;//width height of the board
+    CoordMapper CM;//width height of the board//set equal to size of the grid, but not necessarily
     std::vector<uint8_t> m_data;
     std::vector<uint32_t> m_winzoneMap;
     std::vector<Pentamino> m_blocks;
@@ -67,10 +56,6 @@ public:
 struct DrawSettings;
 
 //manipulates the board// ie the Player
-//constant... for the game...
-//winzone effect controller??? no update events there... :/
-//should be able to just draw the board ... but
-//hover effects and the like - shit =
 class Controller
 {
 public:

@@ -1,19 +1,7 @@
 //TODOS:::
-//Place block/pick up block algorithm... simplifiy the code!
-//save / load winshapes....
-//save starting positions/orientations... ... reset() the map
-//hovered event?  animation? someway to verify can pick it up.... (aka brighten)
-//shoot out a piece... if intersects with winzone... shoot out to not intersect... (find free spot -> local???)
 
-//Winstate, Playground (level creation) states... act on a gameboard also
-//gameboard is NOT a state...
-//is an interface to the board, constraints for the grid to act on.
-//PASS IT THE GRID AND SET OF PIECES
-
-//pick up piece, put down piece, reset pieces
-//IS THAT OK?  Or should i just fudge it
-
-//BUG FOUND: put a piece back after we rotate it!  it overrides, need to rotate back to original rotation!, put in original spots 
+//drop piece
+//piece orientation - absolute vs relative
 
 #include "GameBoard.hpp"
 #include "Colors.hpp"
@@ -43,12 +31,11 @@ void GameBoard::set(const CoordMapper &mapper, const Level &level)//int lvl)
     int numTriesToPlace = 0;
     for(int i = 0; i < 12; i++)
     {
+        //TODO fix for rotations and textures
         int r = 0;// rand()%4;
         bool isFlipped = false;//rand()%2;
         Pentamino block(i, Coord(0,0), rots[r], isFlipped);
-        //try and find a free spot to place it...
         numTriesToPlace += positionBlockInFreeSpot(block);
-        //startBlocks.push_back(block);
         m_blocks.push_back(block);
 
         placeBlock(block);
@@ -88,30 +75,19 @@ int GameBoard::positionBlockInFreeSpot(Pentamino &block)
     return numTriesToPlace;
 }
 
-void GameBoard::setWinShape(const Level &level)//int lvl)
+void GameBoard::setWinShape(const Level &level)
 {
-    //load the level
-//    if(lvl == -1) return;
-//    Level L(lvl);//Level::m_levels[lvl]);//(lvl);//unless I just make it global again ?
     unsigned int width = CM.width;
     unsigned int height = CM.height;
 
     int x_offset = (width - level.width)/2;
-    int y_offset = (height - level.height)/3;// + 1;//the plus 1 is shitty
-    std::cout<<"x_ofsset is "<<x_offset<<" width "<<level.width<<std::endl;
-//out of zone writing with a tall thing... no exceptions thrown though? [] vs .at()
+    int y_offset = (height - level.height)/3;
+    //std::cout<<"x_ofsset is "<<x_offset<<" width "<<level.width<<std::endl;
+    
     for(unsigned int i = 0; i < level.height; i++)
     {
         uint32_t data = reverseBits(level.data[i], level.width);
-        try{
         m_winzoneMap[i + y_offset] = data << x_offset;
-        }
-        catch(std::exception &e)
-        {
-            std::cout<<e.what();
-            throw e;
-        }
-        // why does it not throw an out of bounds excepttion?
     }
 
     for(unsigned int i = 0; i < width; i++)
@@ -225,30 +201,26 @@ bool GameBoard::checkValidity()
     return true;
 }
 
-//int???
-int GameBoard::collides(Pentamino &block)
+bool GameBoard::collides(Pentamino &block)
 {
     //is it colliding with another block
     //is it colliding with out of bounds
-    //is it ALL in the winzone
-    int winctr = 0;
+    
     for(auto &_C : block.coords)
     {
         Coord C = _C + block.defaultPos;
 
         if(!CM.isValid(C))
         {
-            return 2;
+            return true;
         }
         int id = m_data[CM.mapID(C)]&0x0F;
         if(id < 12)
         {
-            return 2;
+            return true;
         }
-        else if(id == WINZONE_ID) winctr++;
     }
-    if(winctr == 5) return 1;
-    return 0;
+    return false;
 }
 
 //need to check the winCoords to the ids on the board,
@@ -292,7 +264,6 @@ void Controller::handleEvent(const sf::Event &event)
         {
         //no 'worldview' mapping required
         sf::Vector2f mousePos(event.mouseMove.x, event.mouseMove.y);
-        //sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
         m_activeCoord = grid.getCoordinate(mousePos);
         //idHovered = board.getId(m_activeCoord);
         idHover = board.get(m_activeCoord)&0x0F;
@@ -390,14 +361,14 @@ void Controller::update()
     //test for collisions
     if(p_activeBlock && blockWasMoved)
     {
-        amColliding = (board.collides(*p_activeBlock) == 2);
+        amColliding = (board.collides(*p_activeBlock));
     }
 
     //test for win condition -> all blocks are in winzone
     won = board.won();
     
     m_updatedCoords.clear();
-    
+//test    
     if(blockWasPlaced || blockWasPickedUp)
     {
         winZoneIsValid = board.checkValidity();
@@ -419,17 +390,15 @@ void Controller::update()
         }
     }
 
-    //draw the blocks!?
-    //idHover == id of where the 'mouse' is
     //Update so can draw hovered block brighter
-    if(!p_activeBlock && idHover < 12)//!= INVALID_ID)
+    if(!p_activeBlock && idHover < 12)
     {
         Pentamino &block = board.m_blocks[idHover];
         Coord P = block.defaultPos;
         for(auto &C : block.coords) m_updatedCoords.push_back(P+C);//(P+C);
     }
     //update so previously hovered block can be drawn dimmer
-    if(hoverChanged && idLastHovered < 12) //drawBlock(m_blocks[idLastHovered]);
+    if(hoverChanged && idLastHovered < 12)
     {
         Pentamino &block = board.m_blocks[idLastHovered];
         Coord P = block.defaultPos;
@@ -497,7 +466,6 @@ DrawSettings::DrawSettings()
             if(h > 360.f) h -= 360.f;
             pieceHues[i] = h / 360.f;
         }
-        //alpha = 160;//192;
     }
 }
 
@@ -518,13 +486,10 @@ void Controller::draw(DrawSettings &settings)
             else grid.setCellColor(C, sf::Color(0,255,0,128), true);
 
             //texture is of the block...
-            int texId = p_activeBlock->texIDs[i];
+            TexAtlasID texId = TexAtlasID(p_activeBlock->texIDs[i]);
             int orientation = p_activeBlock->orientations[i];
-            int x_off = texId%4;
-            int y_off = texId/4;
             bool flipped = p_activeBlock->isFlipped;
-            sf::Vector2f uvpos(128.f * (float)x_off, 128.f * (float)y_off);
-            grid.setCellTexture(C, uvpos, {128.f, 128.f}, orientation, flipped);
+            grid.setCellTexture(C, getTextureUV(texId), getTextureSize(), orientation, flipped);
         }
     }
 }
@@ -551,14 +516,14 @@ void DrawSettings::draw(Coord C, Grid &grid, GameBoard &board,
 
     if( (id&0x0F) > 12)
     {
-        if(id == BACKGROUND_ID) grid.setCellTexture(C, {256.f,128.f}, {128.f, 128.f});
-        else if(id == WINZONE_ID) grid.setCellTexture(C, {384.f,0.f}, {128.f, 128.f});
+        if(id == BACKGROUND_ID) grid.setCellTexture(C, getTextureUV(TexAtlasID::BACKGROUND_TEXTURE), getTextureSize());
+        else if(id == WINZONE_ID) grid.setCellTexture(C, getTextureUV(TexAtlasID::WINZONE_TEXTURE), getTextureSize());
         else throw;
         return;
     }
     
     //a piece is on the board at this location
-    int i = (id&0xF0)>>4;//16 ???
+    int i = (id&0xF0)>>4;
     //assert(i < 5);
     id = id&0x0F;
     
@@ -570,31 +535,29 @@ void DrawSettings::draw(Coord C, Grid &grid, GameBoard &board,
     
     //color of the piece at the location
     COLOR::HSL hsl;
-    hsl.hue = pieceHues[id];//hues[id];
-    hsl.lightness = baseLightness;//0.5f;//0.4f;
-    //float luminance = 0.4f;
+    hsl.hue = pieceHues[id];
+    hsl.lightness = baseLightness;
 
     if(inWinShape)
     {
-        hsl.saturation = winZoneSatEffect;// 0.7f;
+        hsl.saturation = winZoneSatEffect;
     }
-    else hsl.saturation = baseSaturation;// 0.05f;
+    else hsl.saturation = baseSaturation;
 
     if(board.won())
     {
-        hsl.saturation = 0.9f;//*= 1.35f;
-        hsl.lightness = 0.6f;//1.f;
+        hsl.saturation = 0.9f;
+        hsl.lightness = 0.6f;
     }
 
     if(id == idHover)
     {
-        hsl.saturation += hoverSatEffect;//0.1f;
-        hsl.lightness += hoverLightEffect;//0.1f;
-        //luminance += 0.1f;
+        hsl.saturation += hoverSatEffect;
+        hsl.lightness += hoverLightEffect;
     }
 
     color = COLOR::fromHSL(hsl);
     color.a = pieceAlphaTransparency;
-    //color = setLuminance(color, luminance);
+    
     grid.setCellColor(C, color, true);
 }
