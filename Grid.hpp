@@ -32,15 +32,15 @@ struct CoordMapper
 class Grid
 {
 public:
-    Grid(unsigned int width = 10, unsigned int height = 10, float cellSize = 20.f);
-    void create(unsigned int width, unsigned int height, float cellSize);
+    Grid(unsigned int width = 10, unsigned int height = 10, float cellSize_x = 20.f, float cellSize_y = 20.f);
+    void create(unsigned int width, unsigned int height, float cellSize_x, float cellSize_y);
     void setOffset(float x, float y){m_x_offset = x; m_y_offset = y;}
     const unsigned int getWidth() const { return m_mapper.width; }
     const unsigned int getHeight() const { return m_mapper.height; }
     const CoordMapper &getMapper() const { return m_mapper; }
-    const sf::Vector2f getSize() const { return sf::Vector2f(m_mapper.width * m_cellSize, m_mapper.height * m_cellSize); }
+    const sf::Vector2f getSize() const { return sf::Vector2f(m_mapper.width * m_cellSize.x, m_mapper.height * m_cellSize.y); }
     const sf::Vector2f getOffset() const { return sf::Vector2f(m_x_offset, m_y_offset); }
-    const float getCellSize() const {return m_cellSize;}
+    const sf::Vector2f getCellSize() const {return m_cellSize;}
     Coord getCoordinate(const sf::Vector2f &pos);
     void render(sf::RenderTarget &target);
     void setTexMap(sf::Texture *tex) {m_texMap = tex;}
@@ -65,7 +65,7 @@ private:
     sf::VertexBuffer m_vbuffer;
     bool amModified;
     std::vector<sf::Vertex> m_cellShapes;
-    float m_cellSize;
+    sf::Vector2f m_cellSize;
     const sf::Texture *m_texMap;
     float m_texSz;
     uint32_t m_randSeed;

@@ -70,7 +70,7 @@ private:
 class ListBox //public Dialog...
 {
 public:
-    ListBox(sf::Window &_parent, const std::string &title, sf::Font &font, std::vector<Level> &levels, const std::string &fileName);//some function???
+    ListBox(sf::Window &_parent, const std::string &title, sf::Font &font, std::vector<std::string> &names);//, const std::string &title);//some function???
     std::vector<sf::Text> m_texts;
 //    std::vector<sf::RectangleShape> m_shapes;
     unsigned int getChosenId(){return activeId;}
@@ -83,7 +83,7 @@ private:
     sf::RenderWindow m_window;
     Grid m_grid;//....
     void parentMSGLoop();
-    std::vector<Level> &levels;
+    std::vector<std::string> &names;
     Coord activeCoord;
     Coord lastCoord;
     unsigned int numEntriesShown;

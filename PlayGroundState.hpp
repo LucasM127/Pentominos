@@ -21,8 +21,7 @@ private:
 //    Coord mouseCoord;
     Controller m_controller;
     DrawSettings m_drawSettings;
-    std::vector<Level> &levels;
-    std::string &levelFileName;
+    Folder *activeFolder;
 
     void save();
 

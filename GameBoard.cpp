@@ -97,13 +97,21 @@ void GameBoard::setWinShape(const Level &level)//int lvl)
     unsigned int height = CM.height;
 
     int x_offset = (width - level.width)/2;
-    int y_offset = (height - level.height)/4 + 1;
+    int y_offset = (height - level.height)/3;// + 1;//the plus 1 is shitty
     std::cout<<"x_ofsset is "<<x_offset<<" width "<<level.width<<std::endl;
-
+//out of zone writing with a tall thing... no exceptions thrown though? [] vs .at()
     for(unsigned int i = 0; i < level.height; i++)
     {
         uint32_t data = reverseBits(level.data[i], level.width);
+        try{
         m_winzoneMap[i + y_offset] = data << x_offset;
+        }
+        catch(std::exception &e)
+        {
+            std::cout<<e.what();
+            throw e;
+        }
+        // why does it not throw an out of bounds excepttion?
     }
 
     for(unsigned int i = 0; i < width; i++)

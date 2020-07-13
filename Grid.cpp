@@ -5,15 +5,15 @@
 bool renderTestBool;
 
 //this is a vertex mapper
-Grid::Grid(unsigned int width, unsigned int height, float cellSize)
-            : m_cellSize(cellSize), m_texMap(nullptr), m_mapper(width, height)
+Grid::Grid(unsigned int width, unsigned int height, float cellSize_x, float cellSize_y)
+            : m_cellSize(cellSize_x, cellSize_y), m_texMap(nullptr), m_mapper(width, height)
 {
     srand(time(NULL));
     m_randSeed = rand();//hacky
 
     m_texSz = 128.f;
     
-    create(width, height, cellSize);
+    create(width, height, cellSize_x, cellSize_y);
 
     m_vbuffer.setPrimitiveType(sf::Triangles);
     //test???
@@ -22,24 +22,25 @@ Grid::Grid(unsigned int width, unsigned int height, float cellSize)
     m_x_offset = m_y_offset = 0.f;
 }
 
-void Grid::create(unsigned int width, unsigned int height, float cellSize)
+void Grid::create(unsigned int width, unsigned int height, float cellSize_x, float cellSize_y)
 {
     m_mapper.width = width;
     m_mapper.height = height;
-    m_cellSize = cellSize;
+    m_cellSize.x = cellSize_x;
+    m_cellSize.y = cellSize_y;
     m_cellShapes.resize(m_mapper.sz() * 6);
     for(unsigned int j = 0; j < m_mapper.height; ++j)
     {
         for(unsigned int i = 0; i < m_mapper.width; ++i)
         {
             uint cellID = m_mapper.mapID({i,j});
-            m_cellShapes[6 * cellID + 0].position = {i * m_cellSize, j * m_cellSize};
-            m_cellShapes[6 * cellID + 1].position = {i * m_cellSize, (j+1) * m_cellSize};
-            m_cellShapes[6 * cellID + 2].position = {(i+1) * m_cellSize, j * m_cellSize};
+            m_cellShapes[6 * cellID + 0].position = {i * m_cellSize.x, j * m_cellSize.y};
+            m_cellShapes[6 * cellID + 1].position = {i * m_cellSize.x, (j+1) * m_cellSize.y};
+            m_cellShapes[6 * cellID + 2].position = {(i+1) * m_cellSize.x, j * m_cellSize.y};
             
-            m_cellShapes[6 * cellID + 3].position = {(i+1) * m_cellSize, j * m_cellSize};
-            m_cellShapes[6 * cellID + 4].position = {i * m_cellSize, (j+1) * m_cellSize};
-            m_cellShapes[6 * cellID + 5].position = {(i+1) * m_cellSize, (j+1) * m_cellSize};
+            m_cellShapes[6 * cellID + 3].position = {(i+1) * m_cellSize.x, j * m_cellSize.y};
+            m_cellShapes[6 * cellID + 4].position = {i * m_cellSize.x, (j+1) * m_cellSize.y};
+            m_cellShapes[6 * cellID + 5].position = {(i+1) * m_cellSize.x, (j+1) * m_cellSize.y};
         }
     }
 
@@ -229,7 +230,6 @@ void Grid::render(sf::RenderTarget &target)
 //if get coord from here... only, is invalid if get anywhere else!
 Coord Grid::getCoordinate(const sf::Vector2f &pos)
 {
-    
-    return Coord(   (pos.x - m_x_offset) / m_cellSize,
-                    (pos.y - m_y_offset) / m_cellSize);
+    return Coord(   (pos.x - m_x_offset) / m_cellSize.x,
+                    (pos.y - m_y_offset) / m_cellSize.y);
 }

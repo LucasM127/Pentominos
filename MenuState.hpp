@@ -19,7 +19,8 @@ public:
 private:
     //bunch of texts
     sf::Text m_folderText;
-    std::vector<Level> *p_levels;
+    //hmm
+    Folder **pp_activeFolder;
     std::vector<Icon> m_icons;//yay! -> more really need a name, and winzone map
     uint idSelected, idLastSelected;
     enum : unsigned int
@@ -29,4 +30,6 @@ private:
         ID_SWITCHFOLDER,
         NUM_ICONS
     };
+
+    void loadFolder();
 };

@@ -214,7 +214,8 @@ MSG TextBox::run()
                 }
                 if(event.key.code == sf::Keyboard::Enter)
                 {
-                    msg = MSG::TEXT_CHANGED;
+                    if(m_string.size() || m_string2.size())
+                        msg = MSG::TEXT_CHANGED;
                     m_window.close();
                 }
                 if(event.key.code == sf::Keyboard::Escape)
@@ -242,8 +243,14 @@ MSG TextBox::run()
             case sf::Event::MouseButtonPressed:
             {
                 if(hoveredButton)
-                {
-                    if(hoveredButton == &OK) msg = MSG::TEXT_CHANGED;
+                {//have to change it in two places,,, not likeing this
+                //better way of mapping should exist
+                    if(hoveredButton == &OK)
+                    {
+                        if(m_string.size() || m_string2.size())
+                        msg = MSG::TEXT_CHANGED;
+//                        msg = MSG::TEXT_CHANGED;
+                    }
                     if(hoveredButton == &Delete) msg = MSG::DELETE;
                     if(hoveredButton == &Move) msg = MSG::MOVE;
                     m_window.close();
@@ -300,8 +307,8 @@ void TextBox::parentMSGLoop()
 }
 
 //a lot is hardcoded in, but that should be fine...
-ListBox::ListBox(sf::Window &_parent, const std::string &title, sf::Font &font, std::vector<Level> &_levels, const std::string &fileName)
-    : parent(_parent), m_grid(12, _levels.size(), 32.f, 32.f), levels(_levels)//m_grid(1, 12, 480.f, 20.f)
+ListBox::ListBox(sf::Window &_parent, const std::string &title, sf::Font &font, std::vector<std::string> &_names)//, const std::string &title)
+    : parent(_parent), m_grid(12, _names.size(), 32.f, 32.f), names(_names)//m_grid(1, 12, 480.f, 20.f)
 {
     numEntriesShown = 10;//m_grid.getHeight();
     offset = 0;
@@ -310,8 +317,8 @@ ListBox::ListBox(sf::Window &_parent, const std::string &title, sf::Font &font, 
     float height = 0;
     for(unsigned int i = offset; i < numEntriesShown; ++i)
     {
-        if(i == levels.size()) break;
-        std::string name = levels[i].name;
+        if(i == names.size()) break;
+        std::string name = names[i];
         //find and replace
         for(auto &c : name) if(c == '\n') c = ' ';
         sf::Text text;
@@ -379,14 +386,15 @@ MSG ListBox::run()
             case sf::Event::MouseButtonPressed:
             {
                 //assign active ID return?
-                msg = MSG::LIST_ITEM_CHOSE;
+                if(activeId < names.size())
+                    msg = MSG::LIST_ITEM_CHOSE;
                 m_window.close();
             }
             case sf::Event::MouseWheelScrolled: //MouseWheelScrollEvent:
             {
                 if(event.mouseWheelScroll.delta < 0.f)
                 {
-                    if((offset + numEntriesShown) < levels.size())//m_texts.size())
+                    if((offset + numEntriesShown) < names.size())//m_texts.size())
                     {
                         offset += 1;
                         m_grid.setOffset(0.f, -32.f * (float)offset);
@@ -405,8 +413,8 @@ MSG ListBox::run()
                 unsigned int k = 0;
                 for(unsigned int i = offset; k < numEntriesShown; ++i)
                 {
-                    if(i == levels.size()) break;
-                    std::string name = levels[i].name;
+                    if(i == names.size()) break;
+                    std::string name = names[i];
                     //find and replace
                     for(auto &c : name) if(c == '\n') c = ' ';
                     sf::Text &text = m_texts[k++];

@@ -1,6 +1,8 @@
 #ifndef PENTAMINO_BLOCKS_HPP
 #define PENTAMINO_BLOCKS_HPP
 
+//TODO: enum -> enum class : type == uint8_t // hope this works...
+
 #include "Grid.hpp"
 #include "BitFuncs.hpp"
 

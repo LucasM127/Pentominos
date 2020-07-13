@@ -14,7 +14,7 @@
 //how can that work?
 
 PlayGroundState::PlayGroundState(StateMgr &mgr, Context &context)
-    : GameState(mgr, context), board(*context.board), m_controller(board,grid), levels(*context.levels), levelFileName(context.levelFileName)
+    : GameState(mgr, context), board(*context.board), m_controller(board,grid), activeFolder(context.activeFolder)
 {
     LOG("Created PlayGroundState");
     board.set(grid.getMapper(), Level::emptyLevel);//set to be with no winzone Level at all...
@@ -82,6 +82,7 @@ void PlayGroundState::handleEvent(const sf::Event &event)
             break;
         case sf::Keyboard::S://printout the thing!
             save();
+            requestStateChange(MENU);
             break;
         default:
             break;
@@ -120,7 +121,8 @@ void PlayGroundState::update()
 void PlayGroundState::render()
 {
     grid.render(window);
-    if(isHovered) window.draw(m_text);
+    //if(isHovered) 
+        window.draw(m_text);
 }
 
 void PlayGroundState::save()
@@ -171,9 +173,10 @@ void PlayGroundState::save()
     //std::cout<<"min max j : "<<min_j<<" "<<max_j<<std::endl;
     //yay
     //Now I can save this to a level?  Hmmmmmm
-    levels.emplace_back(name,width,height,map);
+    activeFolder->levels.emplace_back(name,width,height,map);
     //save to file
-    saveLevels(levels, levelFileName);
+    activeFolder->save();
+//    saveLevels(levels, levelFileName);
 
     //save to its name!
 }

@@ -7,6 +7,9 @@
 
 #define LOG(X)
 
+// i hand it a reference or some link to the level...
+// in the Gamestate Class?
+
 //get hue from lvl?
 //or set the palette from numPieces = 12
 
@@ -20,13 +23,21 @@ PlayState::PlayState(StateMgr &mgr, Context &context, int lvl)
     LOG("Created PlayState");
     //Level L = (*context.levels)[lvl];
 
-    board.set(grid.getMapper(), lvl);
+    board.set(grid.getMapper(), context.activeFolder->levels[lvl]);
 
-    window.setTitle(Level::m_preLoadedLevels[lvl].name);
+    window.setTitle(context.activeFolder->levels[lvl].name);//Level::m_preLoadedLevels[lvl].name);
 
     m_text.setFont(*context.font);
+    m_text.setString("Press [Q] to quit");//[Q]uit to menu");//"Keep Trying...");
+    //from here
+    m_text.setCharacterSize(32);
+    float textWidth = m_text.getGlobalBounds().width;
+    float width = window.getSize().x;
+    float height = window.getSize().y;
+    m_text.setPosition((width - textWidth)/2.f, height - 100.f);
+    //to here like winstate if i like?
     m_text.setFillColor(sf::Color(128,128,128,128));//::Green);
-    m_text.setPosition(10.f,10.f);
+    //m_text.setPosition(10.f,10.f);
 
     //use the grid board draw function...
     CoordMapper &CM = board.CM;
@@ -38,7 +49,7 @@ PlayState::PlayState(StateMgr &mgr, Context &context, int lvl)
             //draw(Coord(w,h));
         }
     
-    m_text.setString("[Q]uit to menu");//"Keep Trying...");
+    
 }
 
 PlayState::~PlayState(){}
@@ -46,6 +57,7 @@ PlayState::~PlayState(){}
 //COMMON over PlayState and PlayGroundPlay State (tho PlayGround has different event for saving!)
 void PlayState::handleEvent(const sf::Event &event)
 {
+    //requestStateChange(WIN);
     //manages it.  but is NOT a state
     //board.handleEvent(event); ??? more a grid Manager
     switch (event.type)

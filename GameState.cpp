@@ -28,17 +28,14 @@ StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32
     m_curGameState = nullptr;//???
     pOldState = nullptr;
 
-    m_levels = new std::vector<Level>;
-    m_context.levelFileName = "Default";
-    *m_levels = loadLevels(m_context.levelFileName);
-    
 //hope it won't throw...!
     m_context.window = &m_window;
     m_context.grid = &m_grid;
     m_context.board = &m_board;
     m_context.font = &m_font;
     m_context.texture = &m_texture;
-    m_context.levels = m_levels;
+
+    m_context.activeFolder = new Folder("Default");
 
     newStateWasRequested = true;
     nextState = EDIT;
@@ -95,6 +92,7 @@ StateMgr::~StateMgr()
 {
     delete m_curGameState;
     if(pOldState) delete pOldState;
+    delete m_context.activeFolder;
 }
 
 void StateMgr::run()

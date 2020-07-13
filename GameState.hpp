@@ -20,9 +20,7 @@ struct Context
     GameBoard *board;
     sf::Font *font;
     sf::Texture *texture;
-    std::vector<Level> *levels;//point to loaded levels on the stack
-    //should it carry it's name inside too????
-    std::string levelFileName;
+    Folder *activeFolder;
 };
 
 enum STATE

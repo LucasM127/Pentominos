@@ -63,7 +63,10 @@ Folder::~Folder()
 void Folder::load()
 {
     std::ifstream file("Assets/Levels/" + name + ".lvl");
-    if(!file) throw std::runtime_error(name + " not found");
+    if(!file)// throw std::runtime_error(name + " not found");
+    {
+        return;//create it as an empty file
+    }
     FileInfoHeader FH;
     file.read((char*)&FH, sizeof(FH));
     if(FH.fileInfoHeaderSize != sizeof(FH))
