@@ -49,6 +49,7 @@ struct Level
 //    static const std::vector<Level> m_preLoadedLevels;
 //    static std::vector<Level> m_levels;
     static const Level m_icons[4];
+    static const Level intro;
     static const Level emptyLevel;
 };
 

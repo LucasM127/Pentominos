@@ -116,19 +116,60 @@ void setGridCoordTexBasedOnDataAtCoord(Grid &grid, std::vector<uint32_t> &data, 
         grid.setCellTexture(C, uvpos, {128.f, 128.f}, orientation, false);
 }
 
-//I read it in -> and need to center it on the screen!
-//read in width, height, and then the numbers.
-//And the title too!
+//more a free standing type function...
+/***hmmm
+ * void GameBoard::setWinShape(const Level &level)
+{
+    unsigned int width = CM.width;
+    unsigned int height = CM.height;
+
+    int x_offset = (width - level.width)/2;
+    int y_offset = (height - level.height)/3;
+    //std::cout<<"x_ofsset is "<<x_offset<<" width "<<level.width<<std::endl;
+    
+    for(unsigned int i = 0; i < level.height; i++)
+    {
+        uint32_t data = reverseBits(level.data[i], level.width);
+        m_winzoneMap[i + y_offset] = data << x_offset;
+    }
+
+    for(unsigned int i = 0; i < width; i++)
+        for(unsigned int j = 0; j < height; j++)
+        {
+            if(checkBit(m_winzoneMap[j],i))
+            {
+                if(CM.isValid({i,j}))
+                    m_data[CM.mapID({i,j})] = WINZONE_ID;
+                m_winShapeCoords.push_back(Coord(i,j));
+            }
+        }
+
+    return;
+}
+***/
+
+//load it internally Level::intro
 EditBoard::EditBoard(StateMgr &mgr, Context &context)
     : GameState(mgr, context)
 {
-    grid.setTexMap(context.texture);
-    int m_height = grid.getHeight();
-    int m_width = grid.getWidth();
-    m_data.resize(m_height, 0);
-    window.setTitle("Pentaminos");
+    const Level &level = Level::intro;
+    grid.setTexMap(context.texture);//uhuh
+    int height = grid.getHeight();
+    int width = grid.getWidth();
+
+    int x_offset = (width - level.width)/2;
+    int y_offset = (height - level.height)/2;
+
+    m_data.resize(level.height, 0);
+    for(unsigned int i = 0; i < level.height; i++)
+    {
+        uint32_t data = reverseBits(level.data[i], level.width);
+        m_data[i + y_offset] = data << x_offset;
+    }
+    window.setTitle(level.name);
 //    window.create(sf::VideoMode(1320, 840), "Editor", sf::Style::Close);
 
+    /*
     std::ifstream file("foo", std::ios::out | std::ios::binary);
 
     for(auto &i : m_data)
@@ -137,13 +178,14 @@ EditBoard::EditBoard(StateMgr &mgr, Context &context)
         else break;
     }
     file.close();
+    */
 
-    for(int i =0; i< m_width; i++)
-        for(int j= 0; j<m_height; j++)
+    for(int i =0; i< width; i++)
+        for(int j= 0; j<height; j++)
             draw(Coord(i,j));
     
-    for(int i =0; i< m_width; i++)
-        for(int j= 0; j<m_height; j++)
+    for(int i =0; i< width; i++)
+        for(int j= 0; j<height; j++)
             setGridCoordTexBasedOnDataAtCoord(grid, m_data, Coord(i,j));
 }
 /*
