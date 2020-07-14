@@ -109,7 +109,7 @@ bool GameBoard::isInWinShape(Coord C)
     return checkBit(m_winzoneMap[C.j], C.i);
 }
 
-int GameBoard::floodFill(Coord C, bool *visited)
+int GameBoard::floodFill(Coord C, std::vector<bool> &visited)//bool *visited)
 {
     if(!CM.isValid(C)) return 0;
     if(visited[CM.mapID(C)]) return 0;
@@ -185,11 +185,12 @@ uint32_t GameBoard::get(Coord C)
 }
 
 //is winzone area a multiple of 5?
+//convert to a vector???
 bool GameBoard::checkValidity()
 {
-    bool visited[CM.sz()];//, false];
-    
-    for(auto &b : visited) b = false;
+    //bool visited[CM.sz()];//, false];
+    std::vector<bool> visited(CM.sz(), false);
+    //for(auto &b : visited) b = false;
     //for(uint i = 0; i < CM.sz(); ++i) v[i] = false;
 
     for(auto C : m_winShapeCoords)

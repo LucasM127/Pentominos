@@ -39,7 +39,7 @@ public:
     void pickupBlock(Pentamino &block);
     void placeBlock(Pentamino &block);
     bool isInWinShape(Coord C);
-    int floodFill(Coord C, bool *visited);
+    int floodFill(Coord C, std::vector<bool> &visited);//bool *visited);
     bool checkValidity();
     bool collides(Pentamino &block);
     bool won();
