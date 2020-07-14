@@ -1,7 +1,7 @@
 #ifndef GAMESTATE_HPP
 #define GAMESTATE_HPP
 
-#include "Grid.hpp"
+//#include "Grid.hpp"
 #include "GameBoard.hpp"
 #include <unordered_map>//map enum to new type...
 #include <functional>
@@ -102,13 +102,6 @@ private:
   Context m_context;
   
   std::unordered_map<STATE, std::function<GameState*(int)> > m_stateMapping;
-};
-
-class WelcomeState : public GameState
-{
-public:
-    WelcomeState(StateMgr &mgr, Context &context);
-    void handleEvent(const sf::Event &event) override;
 };
 
 class EditState : public GameState

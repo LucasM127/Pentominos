@@ -142,7 +142,7 @@ uint8_t Pentamino::shapeTextures[60] =
 
 const Orientation rots[4] = {DEFAULT, R90CCW, R180, R90CW};
 
-
+/***
 sf::Color WeldonBlue(0x9C986BD0);//FF);//119,156,171);//0x779CABFF);
 sf::Color MountainMeadow(0x32DE8AD0);// 50,222,138);
 sf::Color Tuscan(0xFCD499D0);
@@ -175,7 +175,7 @@ sf::Color blockColors[14] =
     sf::Color(199, 78, 0, 192),// i like
     sf::Color(179,179, 0, 192),
     sf::Color(17, 193, 22, 192),
-    */
+    *  /
     WeldonBlue,
     MountainMeadow,
     Tuscan,
@@ -191,6 +191,7 @@ sf::Color blockColors[14] =
     sf::Color::White,//Beige,
     sf::Color::Black//(128,128,128)
 };
+****/
 /*
 sf::Vector2f Pentamino::textureOffsets[12] = 
 {

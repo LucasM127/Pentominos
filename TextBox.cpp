@@ -135,7 +135,7 @@ MSG TextBox::run()
     float tick = 0.5f;
     float ticker = 0.f;
     bool cursorIsShowing = true;
-    bool textEntered = false;
+    //bool textEntered = false;
 
     Coord mouseCoord;
     Button *hoveredButton = nullptr;
@@ -349,7 +349,6 @@ MSG ListBox::run()
     MSG msg = MSG::CLOSED;
     //scrollup or down if mouse is sitting at top or bottom coordinate without moving???
     sf::Event event;
-    bool selected = false;
     
     while (m_window.isOpen())
     {

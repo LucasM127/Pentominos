@@ -10,7 +10,7 @@
 const unsigned int EMPTY_BLOCK = 12;
 const unsigned int FILLED_BLOCK = 13;
 
-extern sf::Color blockColors[14];
+//extern sf::Color blockColors[14];
 //sf::Vector2f blockTexCoords[14];
 
 //exists in a 5x5 grid with origin 0,0 ?

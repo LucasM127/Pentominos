@@ -20,7 +20,7 @@ void GameBoard::set(const CoordMapper &mapper, const Level &level)//int lvl)
     m_blocks.clear();
 
     CM = mapper;
-    unsigned int width = CM.width;
+    //unsigned int width = CM.width;
     unsigned int height = CM.height;
     m_data.resize(CM.sz(), BACKGROUND_ID);
 
@@ -187,17 +187,21 @@ uint32_t GameBoard::get(Coord C)
 //is winzone area a multiple of 5?
 bool GameBoard::checkValidity()
 {
-    bool visited[CM.sz()];
+    bool visited[CM.sz()];//, false];
+    
     for(auto &b : visited) b = false;
+    //for(uint i = 0; i < CM.sz(); ++i) v[i] = false;
 
     for(auto C : m_winShapeCoords)
     {
         int ctr = floodFill(C, visited);
         if(ctr % 5 != 0)
         {
+            //delete[] visited;
             return false;
         }
     }
+//    delete[] visited;
     return true;
 }
 

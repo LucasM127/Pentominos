@@ -1,5 +1,7 @@
-#include "EditBoard.hpp"
-#include "Pentaminos.hpp"//use logic to determine which texture to use depending on boundaries.
+#include "WelcomeState.hpp"
+#include "Pentaminos.hpp"
+
+//use logic to determine which texture to use depending on boundaries.
 //free function put here for now
 #include <fstream>
 //some way to save ORIENTATION AND TEXID INFO with the coords....
@@ -116,40 +118,8 @@ void setGridCoordTexBasedOnDataAtCoord(Grid &grid, std::vector<uint32_t> &data, 
         grid.setCellTexture(C, uvpos, {128.f, 128.f}, orientation, false);
 }
 
-//more a free standing type function...
-/***hmmm
- * void GameBoard::setWinShape(const Level &level)
-{
-    unsigned int width = CM.width;
-    unsigned int height = CM.height;
-
-    int x_offset = (width - level.width)/2;
-    int y_offset = (height - level.height)/3;
-    //std::cout<<"x_ofsset is "<<x_offset<<" width "<<level.width<<std::endl;
-    
-    for(unsigned int i = 0; i < level.height; i++)
-    {
-        uint32_t data = reverseBits(level.data[i], level.width);
-        m_winzoneMap[i + y_offset] = data << x_offset;
-    }
-
-    for(unsigned int i = 0; i < width; i++)
-        for(unsigned int j = 0; j < height; j++)
-        {
-            if(checkBit(m_winzoneMap[j],i))
-            {
-                if(CM.isValid({i,j}))
-                    m_data[CM.mapID({i,j})] = WINZONE_ID;
-                m_winShapeCoords.push_back(Coord(i,j));
-            }
-        }
-
-    return;
-}
-***/
-
-//load it internally Level::intro
-EditBoard::EditBoard(StateMgr &mgr, Context &context)
+//copy from setWinShape in gameboard.cpp
+WelcomeState::WelcomeState(StateMgr &mgr, Context &context)
     : GameState(mgr, context)
 {
     const Level &level = Level::intro;
@@ -167,18 +137,6 @@ EditBoard::EditBoard(StateMgr &mgr, Context &context)
         m_data[i + y_offset] = data << x_offset;
     }
     window.setTitle(level.name);
-//    window.create(sf::VideoMode(1320, 840), "Editor", sf::Style::Close);
-
-    /*
-    std::ifstream file("foo", std::ios::out | std::ios::binary);
-
-    for(auto &i : m_data)
-    {
-        if(file) file.read((char*)&i, sizeof(uint32_t));//file >> i;
-        else break;
-    }
-    file.close();
-    */
 
     for(int i =0; i< width; i++)
         for(int j= 0; j<height; j++)
@@ -188,35 +146,19 @@ EditBoard::EditBoard(StateMgr &mgr, Context &context)
         for(int j= 0; j<height; j++)
             setGridCoordTexBasedOnDataAtCoord(grid, m_data, Coord(i,j));
 }
+
 /*
-void EditBoard::run()
-{
-    while(window.isOpen())
-    {
-        handleEvents();
-        update();
-        render();
-    }
-}
-*/
 void EditBoard::update()
 {
-    int m_height = grid.getHeight();
-    int m_width = grid.getWidth();
+    int height = grid.getHeight();
+    int width = grid.getWidth();
 //    sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-    for(int i =0; i< m_width; i++)
-        for(int j= 0; j<m_height; j++)
+    for(int i =0; i< width; i++)
+        for(int j= 0; j<height; j++)
             setGridCoordTexBasedOnDataAtCoord(grid, m_data, Coord(i,j));
-}
-/*
-void EditBoard::render()
-{
-    window.clear(sf::Color::White);
-    Grid::render(window);
-    window.display();
 }*/
 
-void EditBoard::handleEvent(const sf::Event &event)
+void WelcomeState::handleEvent(const sf::Event &event)
 {
     if(event.type == sf::Event::KeyPressed || event.type == sf::Event::MouseButtonPressed)
         requestStateChange(MENU);
@@ -244,93 +186,11 @@ void EditBoard::handleEvent(const sf::Event &event)
         }
     }*/
 }
-//flood fill each letter a random color...
-void EditBoard::draw(Coord C)
+
+//colour
+void WelcomeState::draw(Coord C)
 {
     if(checkBit(m_data[C.j], C.i))
                 grid.setCellColor(C, sf::Color(255 * C.i / 22,255 * C.j / 13,128));//sf::Color::White);
     else grid.setCellColor(C, sf::Color::Black);
 }
-
-void EditBoard::save()
-{
-    {
-    std::ofstream file("foo", std::ios::out | std::ios::binary);
-
-    //simply copies a block of data "write(const char* s, streamsize n)" pointed to at s without checking contents, for size n
-    //istream& read (char* s, streamsize n); is the reverse!
-    //Not GOod for the title Though! that is variably sized "A" or "The letter 'A'"
-    //probably best to use getLine() for that to a string.
-    //Title line
-    //line for the data -> newline
-    //and so on...
-    //manipulation checking??? how???
-    //can have a hash and a hash file , and if they dont match that's that.  :~/
-    //Load a backup just in case.
-    //User Created Levels
-    //In Game Levels
-    //Load(lvls) function (lol)
-    
-    for(auto &i : m_data) file.write((char*)&i, sizeof(uint32_t));
-    file.close();
-    }/*
-    {
-    std::ofstream file("MainPage", std::ios::out | std::ios::binary);
-    file.write((char*) grid.getWidth(), sizeof(int));//utility class
-    file.write((char*) grid.getHeight(), sizeof(int));//make this write load a LOT easier...
-    for(int i =0; i< grid.getWidth(); i++)
-        for(int j= 0; j<grid.getHeight(); j++)
-        {
-            uint16_t data = 0;
-//            data = //orientation, and the texture at each coordinate... save it???
-//            file.write((char*) checkBit(m_data[j], i), 1);
-        }
-    }*/
-}
-
-//copypasta from GameBoard...
-/*
-int GameBoard::floodFill(Coord C, bool *visited)
-{
-    if(!CM.isValid(C)) return 0;
-    if(visited[CM.mapID(C)]) return 0;
-    int id = m_data[CM.mapID(C)];
-    if(id != WINZONE_ID) return 0;
-    visited[CM.mapID(C)] = true;
-
-    int ctr = 1;
-
-    Coord up(C.i, C.j-1);
-    Coord down(C.i, C.j+1);
-    Coord left(C.i-1, C.j);
-    Coord right(C.i+1, C.j);
-    ctr += floodFill(up,visited);
-    ctr += floodFill(down,visited);
-    ctr += floodFill(left,visited);
-    ctr += floodFill(right,visited);
-
-    return ctr;
-};
-
-//hmmm or just ... no id?
-void GameBoard::checkValidity()
-{
-    //a piece has been placed or picked up
-    //floodfill around...
-    //create a visited array?
-    bool visited[CM.sz()];
-    for(auto &b : visited) b = false;
-    //int areaSizes[8];
-
-    for(auto C : m_winShapeCoords)
-    {
-        int ctr = floodFill(C, visited);
-        if(ctr % 5 != 0)
-        {
-            isAValidPlacement = false;
-            return;
-        }
-    }
-    isAValidPlacement = true;
-    return;
-}*/

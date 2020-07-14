@@ -1,5 +1,5 @@
 #include "GameState.hpp"
-#include "EditBoard.hpp"
+#include "WelcomeState.hpp"
 #include "GameBoard.hpp"
 #include "WinState.hpp"
 #include "MenuState.hpp"
@@ -7,14 +7,6 @@
 #include "PlayGroundState.hpp"
 #include <iostream>
 #include <cassert>
-
-//#include <X11/Xlib.h>
-
-void PWindow::onCreate()
-{
-    setPosition({1920+(1920 - 1320)/2 , (1080 - 840)/2});
-}
-
 
 //Can think of welcome screen as a winzone map... set width/height/ same save file, with a title.
 //use a custom draw function for the textures is all!
@@ -38,7 +30,7 @@ StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32
     m_context.activeFolder = new Folder("Default");
 
     newStateWasRequested = true;
-    nextState = EDIT;
+    nextState = WELCOME;
     action = REPLACE;
 //is ok-ish
 
@@ -46,8 +38,8 @@ StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32
 //    m_grid.create(22,14,m_grid.getCellSize()*factor);
 
     //set the window and grid sizes here... common to all states.
-    int width = m_grid.getSize().x;
-    int height = m_grid.getSize().y;
+    float width = m_grid.getSize().x;
+    float height = m_grid.getSize().y;
 
 //    m_grid.setOffset((1920-width)/2,(1080-height)/2);
 /*
@@ -68,8 +60,8 @@ StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32
     //HACK to prevent 'jump'
     m_window.create(sf::VideoMode(1, 1), "Pentominos", sf::Style::Close);
     //m_window.create(sf::VideoMode(width, height), "Pentominos", sf::Style::Close);
-    m_window.setPosition({1920+(1920 - width)/2 , (1080 - height)/2});//hmmmm
-    m_window.setSize({width,height});
+    m_window.setPosition({1920+(1920 - (int)width)/2 , (1080 - (int)height)/2});//hmmmm
+    m_window.setSize({(uint)width,(uint)height});//int -> unsigned int
     sf::View view;
     view.setCenter(width/2, height/2);
     view.setSize(width, height);
@@ -83,7 +75,7 @@ StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32
     m_stateMapping[WELCOME] = [this](int x)->GameState*{return new WelcomeState(*this, m_context);};
     m_stateMapping[MENU] = [this](int x)->GameState*{return new MenuState(*this, m_context);};
     m_stateMapping[PLAY] = [this](int x)->GameState*{return new PlayState(*this, m_context, x);};//where x = level
-    m_stateMapping[EDIT] = [this](int x)->GameState*{return new EditBoard(*this, m_context);};
+    //m_stateMapping[EDIT] = [this](int x)->GameState*{return new EditBoard(*this, m_context);};
     m_stateMapping[PLAYGROUND] = [this](int x)->GameState*{return new PlayGroundState(*this, m_context);};
     m_stateMapping[WIN] = [this] (int x)->GameState*{return new WinState(*this, m_context, (WINSTATETYPE)x);};//How to send additional DATA?
 }
@@ -236,20 +228,6 @@ void GameState::render()
     //window.clear(sf::Color::Black);
     grid.render(window);
     //window.display();
-}
-
-WelcomeState::WelcomeState(StateMgr &mgr, Context &context)
-    : GameState(mgr, context)
-{
-    grid.clear(sf::Color::Green);
-}
-
-//make i t a green board fro welcome screen !
-void WelcomeState::handleEvent(const sf::Event &event)
-{
-    if(event.type == sf::Event::KeyPressed)
-        requestStateChange(MENU);
-//        requestStateChange(PLAY, 9);
 }
 
 EditState::EditState(StateMgr &mgr, Context &context)
