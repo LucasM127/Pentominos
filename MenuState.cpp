@@ -146,9 +146,13 @@ void MenuState::handleEvent(const sf::Event &event)
                     std::vector<std::string> files;
                     for (const auto & entry : fs::directory_iterator(path))
                     {
+#ifdef _WIN32
                         std::wstring ws = entry.path();
                         std::string s;
                         for (auto c : ws) s.push_back(c);
+#else
+                        std::string s = entry.path();
+#endif
                         s.erase(s.begin(), s.begin() + path.size());
                         s.erase(s.end()-4, s.end());
                         files.push_back(s);
@@ -207,10 +211,13 @@ void MenuState::handleEvent(const sf::Event &event)
                         std::vector<std::string> files;
                         for (const auto & entry : fs::directory_iterator(path))
                         {
+#ifdef _WIN32
                             std::wstring ws = entry.path();
-//                            std::string s = entry.path();
                             std::string s;
                             for (auto c : ws) s.push_back(c);
+#else
+                            std::string s = entry.path();
+#endif
                             s.erase(s.begin(), s.begin() + path.size());
                             s.erase(s.end()-4, s.end());
                             files.push_back(s);

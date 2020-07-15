@@ -62,7 +62,7 @@ Folder::~Folder()
 //std::vector<Level> loadLevels(const std::string &fileName)
 void Folder::load()
 {
-    std::ifstream file("Assets/Levels/" + name + ".lvl");
+    std::ifstream file("Assets/Levels/" + name + ".lvl", std::ios::binary);
     if(!file)// throw std::runtime_error(name + " not found");
     {
         return;//create it as an empty file

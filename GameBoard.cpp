@@ -129,7 +129,7 @@ int GameBoard::floodFill(Coord C, std::vector<bool> &visited)//bool *visited)
     ctr += floodFill(right,visited);
 
     return ctr;
-};
+}
 
 //see if is 'won' here
 //if is in winzone, set a flag?
