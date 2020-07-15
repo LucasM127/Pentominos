@@ -7,6 +7,8 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 
+typedef unsigned int uint;
+
 extern bool renderTestBool;
 
 struct Coord

@@ -124,13 +124,13 @@ WelcomeState::WelcomeState(StateMgr &mgr, Context &context)
 {
     const Level &level = Level::intro;
     grid.setTexMap(context.texture);//uhuh
-    int height = grid.getHeight();
-    int width = grid.getWidth();
+    uint height = grid.getHeight();
+    uint width = grid.getWidth();
 
-    int x_offset = (width - level.width)/2;
-    int y_offset = (height - level.height)/2;
+    uint x_offset = (width - level.width)/2;
+    uint y_offset = (height - level.height)/2;
 
-    m_data.resize(level.height, 0);
+    m_data.resize(height, 0);
     for(unsigned int i = 0; i < level.height; i++)
     {
         uint32_t data = reverseBits(level.data[i], level.width);

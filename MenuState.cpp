@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem::v1;
 //right click to rename???
@@ -146,7 +146,9 @@ void MenuState::handleEvent(const sf::Event &event)
                     std::vector<std::string> files;
                     for (const auto & entry : fs::directory_iterator(path))
                     {
-                        std::string s = entry.path();
+                        std::wstring ws = entry.path();
+                        std::string s;
+                        for (auto c : ws) s.push_back(c);
                         s.erase(s.begin(), s.begin() + path.size());
                         s.erase(s.end()-4, s.end());
                         files.push_back(s);
@@ -205,7 +207,10 @@ void MenuState::handleEvent(const sf::Event &event)
                         std::vector<std::string> files;
                         for (const auto & entry : fs::directory_iterator(path))
                         {
-                            std::string s = entry.path();
+                            std::wstring ws = entry.path();
+//                            std::string s = entry.path();
+                            std::string s;
+                            for (auto c : ws) s.push_back(c);
                             s.erase(s.begin(), s.begin() + path.size());
                             s.erase(s.end()-4, s.end());
                             files.push_back(s);

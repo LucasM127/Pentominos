@@ -81,7 +81,7 @@ void Folder::load()
     for(auto i = 0; i < FH.numLevels; ++i)
     {
         file.read((char*)&L, sizeof(LevelData));
-        if(!file) throw std::runtime_error("Unable to read in level " + name);
+//        if(!file) throw std::runtime_error("Unable to read in level " + name);
         levels.emplace_back(L);//???
         //levels.emplace_back(Level(L));
         //levels[i](Level(L));//copy construct???

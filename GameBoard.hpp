@@ -81,8 +81,8 @@ private:
     bool blockWasPlaced;
     bool blockWasPickedUp;
     bool hoverChanged;
-    int idLastHovered;
-    int idHover;
+    uint idLastHovered;
+    uint idHover;
 
     void rotatePieceRight();
     void rotatePieceLeft();

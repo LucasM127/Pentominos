@@ -58,10 +58,10 @@ StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32
     //::Display *display;
     //::Window win = XCreateSimpleWindow(display, RootWindow(display, DefaultScreen(display)), 0,0, 0, 0, 0, 0,0);
     //HACK to prevent 'jump'
-    m_window.create(sf::VideoMode(1, 1), "Pentominos", sf::Style::Close);
-    //m_window.create(sf::VideoMode(width, height), "Pentominos", sf::Style::Close);
-    m_window.setPosition({1920+(1920 - (int)width)/2 , (1080 - (int)height)/2});//hmmmm
-    m_window.setSize({(uint)width,(uint)height});//int -> unsigned int
+    //m_window.create(sf::VideoMode(1, 1), "Pentominos", sf::Style::Close);
+    m_window.create(sf::VideoMode(width, height), "Pentominos", sf::Style::Close);
+    //m_window.setPosition({1920+(1920 - (int)width)/2 , (1080 - (int)height)/2});//hmmmm
+    //m_window.setSize({(uint)width,(uint)height});//int -> unsigned int
     sf::View view;
     view.setCenter(width/2, height/2);
     view.setSize(width, height);
