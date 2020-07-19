@@ -84,7 +84,10 @@ struct Pentamino
     Coord coords[5];
     void rotateRight();
     void rotateLeft();
+    void rotate180();
     void flip();
+    uint8_t m_orientation;
+    void setOrientation(Orientation O, bool flipped);
 };
 
 #endif//PENTAMINO_BLOCKS_HPP

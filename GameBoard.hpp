@@ -77,6 +77,8 @@ private:
 
     Coord lastCoords[5];
     Coord lastPos;
+    Orientation lastOrientation;
+    bool lastFlipped;
     bool blockWasMoved;
     bool blockWasPlaced;
     bool blockWasPickedUp;
@@ -90,7 +92,7 @@ private:
     void movePiece();
     void setActive(Coord C);
     void pickUpOrPlacePiece();
-    //void resetPiece();
+    void resetPiece();
     void saveCoords();
     void update();
 };

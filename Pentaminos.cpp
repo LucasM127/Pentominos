@@ -203,7 +203,7 @@ sf::Vector2f Pentamino::textureOffsets[12] =
 //5 x 5 grid address space...
 void transformAddress(int n, unsigned int &ci, unsigned int &cj, Orientation rot, bool isFlipped)
 {
-    if(isFlipped) n = n + ((n % 3) - 1) * -2;
+    if(isFlipped) n = n + ((n % 3) - 1) * -2;//horizontally flipped across index 2 [012345] -> [54321]
     
     switch (rot)
     {
@@ -245,6 +245,7 @@ void Pentamino::rotateRight()
         C.i = C.j;
         C.j = -temp;
     }
+    m_orientation = isFlipped ? (m_orientation + 1) % 4 : (m_orientation + (4 - 1)) % 4;
     for(auto &o : orientations)
     {//isFLipped????
         if(!isFlipped)
@@ -271,6 +272,7 @@ void Pentamino::rotateLeft()
         C.i = -C.j;
         C.j = temp;
     }
+    m_orientation = isFlipped ? (m_orientation + (4 - 1)) % 4 : (m_orientation + 1) % 4;
     for(auto &o : orientations)
     {
         if(isFlipped)
@@ -288,6 +290,22 @@ void Pentamino::rotateLeft()
     }
 }
 
+void Pentamino::rotate180()
+{
+    //5x5 grid
+    for(auto &C : coords)
+    {
+        C.i *= -1;
+        C.j *= -1;
+    }
+    m_orientation = (m_orientation + 2) % 4;
+    for(auto &o : orientations)
+    {
+        //add 2 circularly
+        o = (o + 2) % 4;
+    }
+}
+
 void Pentamino::flip()
 {
     //swap x
@@ -299,7 +317,7 @@ void Pentamino::flip()
 }
 
 //load the pieces and the bits... then transform it to the rotation afterwards (rotate)
-Pentamino::Pentamino(unsigned int i, Coord c, Orientation r, bool flipped) : id(i), defaultPos(c)//, defaultRot(r)
+Pentamino::Pentamino(unsigned int i, Coord c, Orientation r, bool flipped) : isFlipped(flipped), id(i), defaultPos(c)//, defaultRot(r)
 {
     //load block...
     //get the local coordinate points to draw...
@@ -313,11 +331,29 @@ Pentamino::Pentamino(unsigned int i, Coord c, Orientation r, bool flipped) : id(
             C.i -= 2;
             C.j -= 2;
 
-            //other shit here?
-            texIDs[ctr] = shapeTextures[id*5 + ctr] & 0b00001111;
+            texIDs[ctr] = shapeTextures[id*5 + ctr] & 0b00001111;//constant
             orientations[ctr] = (shapeTextures[id*5 + ctr] & 0b11110000) >> 4;
+            //orientation transformation...
+            orientations[ctr] = isFlipped ? (orientations[ctr] + r) % 4 : (orientations[ctr] + (4 - r)) % 4;
             coords[ctr++] = C;
         }
     }
-    isFlipped = flipped;
+    m_orientation = r;
+}
+
+void Pentamino::setOrientation(Orientation newOrientation, bool flipped)
+{
+    if(flipped != isFlipped) flip();
+    if(newOrientation == m_orientation) return;
+    if(newOrientation == ((m_orientation + 1)%4))//circular!
+    {
+        rotateLeft();
+        return;
+    }
+    if(((newOrientation + 1)%4) == m_orientation)
+    {
+        rotateRight();
+        return;
+    }
+    rotate180();
 }

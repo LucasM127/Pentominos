@@ -32,8 +32,8 @@ void GameBoard::set(const CoordMapper &mapper, const Level &level)//int lvl)
     for(int i = 0; i < 12; i++)
     {
         //TODO fix for rotations and textures
-        int r = 0;// rand()%4;
-        bool isFlipped = false;//rand()%2;
+        int r = rand()%4;//0
+        bool isFlipped = rand()%2;//true;//false;//rand()%2;
         Pentamino block(i, Coord(0,0), rots[r], isFlipped);
         numTriesToPlace += positionBlockInFreeSpot(block);
         m_blocks.push_back(block);
@@ -286,7 +286,7 @@ void Controller::handleEvent(const sf::Event &event)
         }
         else if(event.mouseButton.button == sf::Mouse::Right)
         {
-            ;//resetPiece();
+            resetPiece();
         }
     }
     default:
@@ -314,6 +314,16 @@ void Controller::flipPiece()
     if(p_activeBlock == nullptr) return;
     saveCoords();
     p_activeBlock->flip();//clear the screen here too!
+}
+void Controller::resetPiece()
+{
+    saveCoords();
+    if(p_activeBlock == nullptr) return;
+    p_activeBlock->setOrientation(lastOrientation, lastFlipped);
+    p_activeBlock->defaultPos = lastPos;
+    board.placeBlock(*p_activeBlock);
+    p_activeBlock = nullptr;
+    blockWasPlaced = true;
 }
 
 void Controller::movePiece()
@@ -354,6 +364,9 @@ void Controller::pickUpOrPlacePiece()
         if(p_activeBlock == nullptr) return;
         board.pickupBlock(*p_activeBlock);
         blockWasPickedUp = true;
+        lastPos = p_activeBlock->defaultPos;
+        lastFlipped = p_activeBlock->isFlipped;
+        lastOrientation = (Orientation)p_activeBlock->m_orientation;
     }
 }
 
@@ -373,7 +386,8 @@ void Controller::update()
     won = board.won();
     
     m_updatedCoords.clear();
-//test    
+//test
+//update the coordinates where the board was too...???
     if(blockWasPlaced || blockWasPickedUp)
     {
         winZoneIsValid = board.checkValidity();
