@@ -1,8 +1,3 @@
-//TODOS:::
-
-//drop piece
-//piece orientation - absolute vs relative
-
 #include "GameBoard.hpp"
 #include "Colors.hpp"
 
@@ -29,7 +24,7 @@ void GameBoard::set(const CoordMapper &mapper, const Level &level)//int lvl)
 
     {//Function randomly places blocks without overlap
     int numTriesToPlace = 0;
-    for(int i = 0; i < 12; i++)
+    for(unsigned int i = 0; i < 12; i++)
     {
         //TODO fix for rotations and textures
         int r = rand()%4;//0
@@ -40,7 +35,7 @@ void GameBoard::set(const CoordMapper &mapper, const Level &level)//int lvl)
 
         placeBlock(block);
     }
-    std::cout<<"Placing blocks took "<<numTriesToPlace<<" tries."<<std::endl;
+    //std::cout<<"Placing blocks took "<<numTriesToPlace<<" tries."<<std::endl;
     }
 }
 
@@ -56,7 +51,7 @@ int GameBoard::positionBlockInFreeSpot(Pentamino &block)
         x = rand()%CM.width;
         y = rand()%CM.height;
         int ctr = 0;
-        for(auto &C_ : block.coords)
+        for(auto &C_ : block.m_coords)
         {
             Coord C = C_ + Coord(x,y);
             if(!CM.isValid(C)) break;
@@ -71,7 +66,7 @@ int GameBoard::positionBlockInFreeSpot(Pentamino &block)
         }
         if(ctr == 5) break;
     }
-    block.defaultPos = Coord(x,y);
+    block.m_pos = Coord(x,y);
     return numTriesToPlace;
 }
 
@@ -135,11 +130,11 @@ int GameBoard::floodFill(Coord C, std::vector<bool> &visited)//bool *visited)
 //if is in winzone, set a flag?
 void GameBoard::placeBlock(Pentamino &block)
 {
-    Coord P = block.defaultPos;
+    Coord P = block.m_pos;
 
     for(unsigned int i = 0; i < 5; i++)
     {
-        Coord C = P + block.coords[i];
+        Coord C = P + block.m_coords[i];
         if(!CM.isValid(C)) throw;
         m_data[CM.mapID(C)] = (block.id + (i << 4));
     }
@@ -147,10 +142,10 @@ void GameBoard::placeBlock(Pentamino &block)
 
 void GameBoard::pickupBlock(Pentamino &block)
 {
-    Coord P = block.defaultPos;
+    Coord P = block.m_pos;
     for(int i = 0; i < 5; ++i)
     {
-        Coord C = P + block.coords[i];
+        Coord C = P + block.m_coords[i];
         if(isInWinShape(C))
         {
             m_data[CM.mapID(C)] = WINZONE_ID;
@@ -211,9 +206,9 @@ bool GameBoard::collides(Pentamino &block)
     //is it colliding with another block
     //is it colliding with out of bounds
     
-    for(auto &_C : block.coords)
+    for(auto &_C : block.m_coords)
     {
-        Coord C = _C + block.defaultPos;
+        Coord C = _C + block.m_pos;
 
         if(!CM.isValid(C))
         {
@@ -320,40 +315,39 @@ void Controller::resetPiece()
     saveCoords();
     if(p_activeBlock == nullptr) return;
     p_activeBlock->setOrientation(lastOrientation, lastFlipped);
-    p_activeBlock->defaultPos = lastPos;
+    p_activeBlock->m_pos = lastPos;
     board.placeBlock(*p_activeBlock);
+    
+//Hmmmmmmm hacky but redraws the piece as if was hovered so thats fine
+    hoverChanged = true;
+    idHover = p_activeBlock->id;
+
     p_activeBlock = nullptr;
-    blockWasPlaced = true;
+    blockWasPlaced = true;//for checking winzone validity
 }
 
 void Controller::movePiece()
 {
     if(p_activeBlock == nullptr) return;
-    if(p_activeBlock->defaultPos != m_activeCoord)
+    if(p_activeBlock->m_pos != m_activeCoord)
     {
         saveCoords();
-        p_activeBlock->defaultPos = m_activeCoord;
+        p_activeBlock->m_pos = m_activeCoord;
         blockWasMoved = true;
     }
 }
 
-//Code to get Hover ID
-/*
-            unsigned int id = m_data[CM.mapID(C)]&0x0F;//.id;//&0x0F;
-            hoverChanged = (id != idHover);
-            idLastHovered = idHover;
-            idHover = id; 
-        }
-        else idHover = INVALID_ID;
-*/
-
+//redraw the piece....
 void Controller::pickUpOrPlacePiece()
 {
+    //placing piece
     if(p_activeBlock && !amColliding)
     {
         saveCoords();
         board.placeBlock(*p_activeBlock);
         //checkValidity();
+        idHover = p_activeBlock->id;
+        hoverChanged = true;
         p_activeBlock = nullptr;
         blockWasPlaced = true;
     }
@@ -364,18 +358,14 @@ void Controller::pickUpOrPlacePiece()
         if(p_activeBlock == nullptr) return;
         board.pickupBlock(*p_activeBlock);
         blockWasPickedUp = true;
-        lastPos = p_activeBlock->defaultPos;
-        lastFlipped = p_activeBlock->isFlipped;
+        lastPos = p_activeBlock->m_pos;
+        lastFlipped = p_activeBlock->amFlipped;
         lastOrientation = (Orientation)p_activeBlock->m_orientation;
     }
 }
 
 void Controller::update()
 {    
-    //basically how are we to draw the board?
-    //amColliding = green/red over lay piece
-    //have we changed our idHover
-
     //test for collisions
     if(p_activeBlock && blockWasMoved)
     {
@@ -386,45 +376,47 @@ void Controller::update()
     won = board.won();
     
     m_updatedCoords.clear();
-//test
-//update the coordinates where the board was too...???
+
+    //winzone coloring if invalid
     if(blockWasPlaced || blockWasPickedUp)
     {
         winZoneIsValid = board.checkValidity();
-        for(auto & C : board.m_winShapeCoords) m_updatedCoords.push_back(C);//draw(C);
+        for(auto & C : board.m_winShapeCoords) m_updatedCoords.push_back(C);
     }
 
     if(blockWasMoved || blockWasPickedUp)
     {
-        for(auto &C : lastCoords) m_updatedCoords.push_back(C);//draw(C);
+        for(auto &C : lastCoords) m_updatedCoords.push_back(C);
     }
 
-    //draw the selected piece overlay
+    //draw the selected piece underlaying board (for proper transparency effects)
     if(p_activeBlock)
     {
         for(int i = 0; i < 5; i++)
         {
-            Coord C = p_activeBlock->coords[i] + p_activeBlock->defaultPos;
+            Coord C = p_activeBlock->m_coords[i] + p_activeBlock->m_pos;
             m_updatedCoords.push_back(C);
         }
     }
 
-    //Update so can draw hovered block brighter
-    if(!p_activeBlock && idHover < 12)
+    //draw hover effects
+    if(hoverChanged)
     {
-        Pentamino &block = board.m_blocks[idHover];
-        Coord P = block.defaultPos;
-        for(auto &C : block.coords) m_updatedCoords.push_back(P+C);//(P+C);
+        if(idLastHovered < 12)
+        {
+            Pentamino &block = board.m_blocks[idLastHovered];
+            Coord P = block.m_pos;
+            for(auto &C : block.m_coords) m_updatedCoords.push_back(P+C);
+        }
+        if(!p_activeBlock && idHover < 12)
+        {
+            Pentamino &block = board.m_blocks[idHover];
+            Coord P = block.m_pos;
+            for(auto &C : block.m_coords) m_updatedCoords.push_back(P+C);
+        }
     }
-    //update so previously hovered block can be drawn dimmer
-    if(hoverChanged && idLastHovered < 12)
-    {
-        Pentamino &block = board.m_blocks[idLastHovered];
-        Coord P = block.defaultPos;
-        for(auto &C : block.coords) m_updatedCoords.push_back(P+C);
-    }
-    
-    idLastHovered = idHover;//
+
+    idLastHovered = idHover;
 
     blockWasPlaced = false;
     blockWasMoved = false;
@@ -436,10 +428,10 @@ void Controller::saveCoords()
 {
     if(!p_activeBlock) return;
 
-    Coord P = p_activeBlock->defaultPos;
-    for(int i = 0; i < 5; i++)
+    Coord P = p_activeBlock->m_pos;
+    for(unsigned int i = 0; i < 5; ++i)
     {
-        lastCoords[i] = P + p_activeBlock->coords[i];
+        lastCoords[i] = P + p_activeBlock->m_coords[i];
     }
     blockWasMoved = true;
 }
@@ -474,7 +466,7 @@ void Controller::saveCoords()
 DrawSettings::DrawSettings()
     :pieceAlphaTransparency(160), baseLightness(0.5f), baseSaturation(0.05f),
      winZoneSatEffect(0.7f), winZoneLightEffect(19887.f),
-     hoverSatEffect(0.1f), hoverLightEffect(0.1f)
+     hoverSatEffect(0.3f), hoverLightEffect(0.2f)
 {
     {
         int hueRandomVariation = rand()%30;
@@ -500,14 +492,14 @@ void Controller::draw(DrawSettings &settings)
     {
         for(int i = 0; i < 5; i++)
         {
-            Coord C = p_activeBlock->coords[i] + p_activeBlock->defaultPos;
+            Coord C = p_activeBlock->m_coords[i] + p_activeBlock->m_pos;
             if(amColliding) grid.setCellColor(C, sf::Color(255,0,0,128), true);
             else grid.setCellColor(C, sf::Color(0,255,0,128), true);
 
             //texture is of the block...
-            TexAtlasID texId = TexAtlasID(p_activeBlock->texIDs[i]);
-            int orientation = p_activeBlock->orientations[i];
-            bool flipped = p_activeBlock->isFlipped;
+            TexAtlasID texId = TexAtlasID(p_activeBlock->m_texIDs[i]);
+            int orientation = p_activeBlock->m_texOrientations[i];
+            bool flipped = p_activeBlock->amFlipped;
             grid.setCellTexture(C, getTextureUV(texId), getTextureSize(), orientation, flipped);
         }
     }
@@ -546,9 +538,9 @@ void DrawSettings::draw(Coord C, Grid &grid, GameBoard &board,
     //assert(i < 5);
     id = id&0x0F;
     
-    TexAtlasID texId = TexAtlasID(board.m_blocks[id].texIDs[i]);
-    int orientation = board.m_blocks[id].orientations[i];
-    bool flipped = board.m_blocks[id].isFlipped;
+    TexAtlasID texId = TexAtlasID(board.m_blocks[id].m_texIDs[i]);
+    int orientation = board.m_blocks[id].m_texOrientations[i];
+    bool flipped = board.m_blocks[id].amFlipped;
 
     grid.setCellTexture(C, getTextureUV(texId), getTextureSize(), orientation, flipped);
     

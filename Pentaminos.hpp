@@ -72,22 +72,25 @@ enum PentaminoShape : int
 struct Pentamino
 {
     Pentamino(unsigned int i, Coord c, Orientation r, bool flipped);
-    static uint32_t shapes[12];
-    static uint8_t shapeTextures[60];
-    //mapping of the shape to its textureid and orientations...
-    uint8_t texIDs[5];
-    uint8_t orientations[5];
-    bool isFlipped;
-    unsigned int id;
-    Coord defaultPos;
-    //Rotation defaultRot;
-    Coord coords[5];
+
     void rotateRight();
     void rotateLeft();
     void rotate180();
     void flip();
-    uint8_t m_orientation;
     void setOrientation(Orientation O, bool flipped);
+
+    const unsigned int id;
+
+    uint8_t m_orientation;
+    bool amFlipped;
+    Coord m_pos;
+    Coord m_coords[5];
+    //for texture mapping of the coord to texAtlas
+    uint8_t m_texIDs[5];
+    uint8_t m_texOrientations[5];
+
+    static uint32_t shapes[12];
+    static uint8_t shapeTextures[60];
 };
 
 #endif//PENTAMINO_BLOCKS_HPP

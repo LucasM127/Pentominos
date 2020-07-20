@@ -82,14 +82,14 @@ void WinState::tick()
     unsigned int lastId = m_activeId;
     m_activeId = (m_activeId+1)%board.m_blocks.size();
     //redraw the 2 blocks
-    for(auto &_C : board.m_blocks[lastId].coords)
+    for(auto &_C : board.m_blocks[lastId].m_coords)
     {
-        Coord C = board.m_blocks[lastId].defaultPos + _C;
+        Coord C = board.m_blocks[lastId].m_pos + _C;
         m_drawSettings.draw(C, grid, board, m_activeId);
     }
-    for(auto &_C : board.m_blocks[m_activeId].coords)
+    for(auto &_C : board.m_blocks[m_activeId].m_coords)
     {
-        Coord C = board.m_blocks[m_activeId].defaultPos + _C;
+        Coord C = board.m_blocks[m_activeId].m_pos + _C;
         m_drawSettings.draw(C, grid, board, m_activeId);
     }
 }

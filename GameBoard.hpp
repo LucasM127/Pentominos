@@ -82,6 +82,7 @@ private:
     bool blockWasMoved;
     bool blockWasPlaced;
     bool blockWasPickedUp;
+    bool blockWasReset;
     bool hoverChanged;
     uint idLastHovered;
     uint idHover;
