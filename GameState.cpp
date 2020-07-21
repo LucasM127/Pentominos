@@ -14,8 +14,11 @@
 //16x9
 //1024 x 768
 //goes weird if width ever exceeds 32 lol -> cause of winShape as uint32_t
+//64.f size built
 StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32,32)// 
 {
+    //set cellsz of grid after find out size of window...
+    PGUI::setCellSize(32.f);
     //draw the grid with an offset?
     m_curGameState = nullptr;//???
     pOldState = nullptr;

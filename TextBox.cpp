@@ -7,7 +7,13 @@ namespace PGUI
 
 //GLobals
 float cellSz = 32.f;
-unsigned int textSz = 24;
+unsigned int textSz = cellSz * 0.75f;//24
+
+void setCellSize(float sz)
+{
+    cellSz = sz;
+    textSz = 0.75f * cellSz;
+}
 
 void Button::set(unsigned int minx, unsigned int maxx, unsigned int miny, unsigned int maxy)
 {
@@ -40,32 +46,32 @@ bool Button::isHovered(Coord C)
 //TEXTBOX
 
 TextBox::TextBox(sf::Window &_parent, const std::wstring & title, const std::string & string, sf::Font &font)//, std::function<void()> fn)
-    : parent(_parent), m_grid(12,3,32.f,32.f), m_string(string)//m_function(fn), m_grid(12,3,40.f)
+    : parent(_parent), m_grid(12,3,cellSz,cellSz), m_string(string)//m_function(fn), m_grid(12,3,40.f)
 {
     for(auto &c : m_string) if(c == '\n') c = '^';
     std::string m_string2;
 
     m_instructionText.setFont(font);
-    m_instructionText.setCharacterSize(24);
+    m_instructionText.setCharacterSize(textSz);
     m_instructionText.setPosition(0.f, 0.f);
     m_instructionText.setString("Type '^' for a newline character");
     m_instructionText.setFillColor(sf::Color(128,128,128,128));
 
     m_text.setFont(font);
-    m_text.setCharacterSize(24);
-    m_text.setPosition(0.f, 32.f);
+    m_text.setCharacterSize(textSz);
+    m_text.setPosition(0.f, cellSz);
     m_text.setString(m_string);
     m_text.setFillColor(sf::Color::Black);
 
     m_cursor.setFont(font);
     m_cursor.setString("|");
-    m_cursor.setCharacterSize(32);
+    m_cursor.setCharacterSize((int)cellSz);
     m_cursor.setFillColor(sf::Color(255,255,255,128));
     m_cursor.setPosition(m_text.getPosition().x + m_text.getGlobalBounds().width, 
                          m_text.getPosition().y - 5.f);
     
     m_text2.setFont(font);
-    m_text2.setCharacterSize(24);
+    m_text2.setCharacterSize(textSz);
     m_text2.setPosition(m_text.getPosition().x + m_text.getGlobalBounds().width + m_cursor.getGlobalBounds().width, 
                          m_text.getPosition().y);
     //m_text2.setString(m_string2);
@@ -88,31 +94,40 @@ TextBox::TextBox(sf::Window &_parent, const std::wstring & title, const std::str
     Move.setColor(m_grid);
 
     m_OKtext.setFont(font);
-    m_OKtext.setCharacterSize(24);
-    m_OKtext.setPosition(OK.min_x * 32.f + 0.f, OK.min_y * 32.f + 0.f);
+    m_OKtext.setCharacterSize(textSz);
+    m_OKtext.setPosition(OK.min_x * cellSz + 0.f, OK.min_y * cellSz + 0.f);
     m_OKtext.setFillColor(sf::Color(0,0,0,128));
     m_OKtext.setString("ENTER");
 
     m_Canceltext.setFont(font);
-    m_Canceltext.setCharacterSize(24);
-    m_Canceltext.setPosition(Cancel.min_x * 32.f + 0.f, Cancel.min_y * 32.f + 0.f);
+    m_Canceltext.setCharacterSize(textSz);
+    m_Canceltext.setPosition(Cancel.min_x * cellSz + 0.f, Cancel.min_y * cellSz + 0.f);
     m_Canceltext.setFillColor(sf::Color(0,0,0,128));
     m_Canceltext.setString("CANCEL");
 
     m_Deletetext.setFont(font);
-    m_Deletetext.setCharacterSize(24);
-    m_Deletetext.setPosition(Delete.min_x * 32.f + 0.f, Delete.min_y * 32.f + 0.f);
+    m_Deletetext.setCharacterSize(textSz);
+    m_Deletetext.setPosition(Delete.min_x * cellSz + 0.f, Delete.min_y * cellSz + 0.f);
     m_Deletetext.setFillColor(sf::Color(0,0,0,128));
     m_Deletetext.setString("DELETE");
 
     m_Movetext.setFont(font);
-    m_Movetext.setCharacterSize(24);
-    m_Movetext.setPosition(Move.min_x * 32.f + 0.f, Move.min_y * 32.f + 0.f);
+    m_Movetext.setCharacterSize(textSz);
+    m_Movetext.setPosition(Move.min_x * cellSz + 0.f, Move.min_y * cellSz + 0.f);
     m_Movetext.setFillColor(sf::Color(0,0,0,128));
     m_Movetext.setString("MOVE");
 
-    m_window.create(sf::VideoMode(384, 96), title, sf::Style::Close);
+//create setposition resize...
+    //m_window.create(sf::VideoMode(1, 1), title, sf::Style::Close);
+    unsigned int width = 12 * cellSz;//384;
+    unsigned int height = 3 * cellSz;//96;
+    m_window.create(sf::VideoMode(width, height), title, sf::Style::Close);
     m_window.setPosition(parent.getPosition() + sf::Vector2i(100,100));
+    //m_window.setSize({384,96});
+    //sf::View view;
+    //view.setCenter(384/2,96/2);
+    //view.setSize(384,96);
+    //m_window.setView(view);
     
     //run();
 }
@@ -308,7 +323,7 @@ void TextBox::parentMSGLoop()
 
 //a lot is hardcoded in, but that should be fine...
 ListBox::ListBox(sf::Window &_parent, const std::string &title, sf::Font &font, std::vector<std::string> &_names)//, const std::string &title)
-    : parent(_parent), m_grid(12, _names.size(), 32.f, 32.f), names(_names)//m_grid(1, 12, 480.f, 20.f)
+    : parent(_parent), m_grid(12, _names.size(), cellSz, cellSz), names(_names)//m_grid(1, 12, 480.f, 20.f)
 {
     numEntriesShown = 10;//m_grid.getHeight();
     offset = 0;
@@ -328,12 +343,12 @@ ListBox::ListBox(sf::Window &_parent, const std::string &title, sf::Font &font, 
         text.setPosition(0, height);
         text.setCharacterSize(textSz);
         m_texts.push_back(text);
-        height += 32;//text.getGlobalBounds().height + 4;
+        height += cellSz;//text.getGlobalBounds().height + 4;
     }
 
 //    unsigned int width = m_grid.getWidth();
     
-    m_window.create(sf::VideoMode(m_grid.getSize().x, (float)numEntriesShown * 32.f), title, sf::Style::Close);
+    m_window.create(sf::VideoMode(m_grid.getSize().x, (float)numEntriesShown * cellSz), title, sf::Style::Close);
     m_window.setPosition(parent.getPosition() + sf::Vector2i(100,100));
     for(uint x = 0; x < m_grid.getWidth(); ++x)
     for(uint y = 0; y < m_grid.getHeight(); ++y)
@@ -396,7 +411,7 @@ MSG ListBox::run()
                     if((offset + numEntriesShown) < names.size())//m_texts.size())
                     {
                         offset += 1;
-                        m_grid.setOffset(0.f, -32.f * (float)offset);
+                        m_grid.setOffset(0.f, -cellSz * (float)offset);
                     }
                 }
                 else
@@ -404,7 +419,7 @@ MSG ListBox::run()
                     if(offset != 0)
                     {
                         offset -= 1;
-                        m_grid.setOffset(0.f, -32.f * (float)offset);
+                        m_grid.setOffset(0.f, -cellSz * (float)offset);
                     }
                 }
                 /////

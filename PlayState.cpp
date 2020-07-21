@@ -30,11 +30,12 @@ PlayState::PlayState(StateMgr &mgr, Context &context, int lvl)
     m_text.setFont(*context.font);
     m_text.setString("Press [Q] to quit");//[Q]uit to menu");//"Keep Trying...");
     //from here
-    m_text.setCharacterSize(32);
+    float cellSz = grid.getCellSize().x;
+    m_text.setCharacterSize(cellSz);
     float textWidth = m_text.getGlobalBounds().width;
     float width = window.getSize().x;
     float height = window.getSize().y;
-    m_text.setPosition((width - textWidth)/2.f, height - 100.f);
+    m_text.setPosition((width - textWidth)/2.f, height - 2.f * cellSz);
     //to here like winstate if i like?
     m_text.setFillColor(sf::Color(128,128,128,128));//::Green);
     //m_text.setPosition(10.f,10.f);

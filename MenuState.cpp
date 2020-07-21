@@ -10,7 +10,7 @@
 namespace fs = std::experimental::filesystem::v1;
 //right click to rename???
 
-void MenuState::Icon::set(const Level &level, sf::Font &font)
+void MenuState::Icon::set(const Level &level, sf::Font &font, float cellSz)
 {
     sf::Image image;
     image.create(24,24, sf::Color(0,0,0,0));
@@ -31,11 +31,11 @@ void MenuState::Icon::set(const Level &level, sf::Font &font)
 //should maybe have a default texture in case it takes long to load a texture ?????
     sprite.setTexture(texture);
     sprite.setOrigin(12.f,12.f);
-    sprite.scale(128.f/24.f,128.f/24.f);
+    sprite.scale(cellSz * 2.f/24.f,cellSz * 2.f/24.f);//2 * cellsize...
 
     //only some way to set 'centered' multiline
     text.setFont(font);
-    text.setCharacterSize(20);
+    text.setCharacterSize(cellSz/3);// 20);//64 -> 20 ratio ? 64 / 4
     text.setFillColor(sf::Color::White);
     text.setString(level.name);
     text.setStyle(sf::Text::Underlined);
@@ -61,15 +61,16 @@ MenuState::MenuState(StateMgr &mgr, Context &context)
 
 void MenuState::loadFolder()
 {
+    float cellSz = grid.getCellSize().x;
     sf::Clock clock;
     m_icons.clear();
     m_icons.resize((*pp_activeFolder)->levels.size() + NUM_ICONS);//re-allocates and throws the textures out of scope if pushback or emplace back
-    m_icons[ID_CREATELEVEL].set(Level::m_icons[0], font);
-    m_icons[ID_CREATEFOLDER].set(Level::m_icons[2], font);
-    m_icons[ID_SWITCHFOLDER].set(Level::m_icons[1], font);
+    m_icons[ID_CREATELEVEL].set(Level::m_icons[0], font, cellSz);
+    m_icons[ID_CREATEFOLDER].set(Level::m_icons[2], font, cellSz);
+    m_icons[ID_SWITCHFOLDER].set(Level::m_icons[1], font, cellSz);
     for(size_t i = 0; i < (*pp_activeFolder)->levels.size(); ++i)
     {
-        m_icons[i+NUM_ICONS].set((*pp_activeFolder)->levels[i], font);
+        m_icons[i+NUM_ICONS].set((*pp_activeFolder)->levels[i], font, cellSz);
     }
     
     //position
@@ -79,7 +80,7 @@ void MenuState::loadFolder()
         float x_pos = 2*sz + 3*sz * (i%7);
         float y_pos = 2*sz + 3*sz * (i/7);
         m_icons[i].sprite.setPosition(x_pos, y_pos);
-        m_icons[i].text.setPosition(x_pos, y_pos + sz/2.f);
+        m_icons[i].text.setPosition(x_pos, y_pos + sz/2.f);//set text sz (fn of cellsize)
     }
 
     {

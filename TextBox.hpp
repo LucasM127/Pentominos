@@ -12,6 +12,8 @@
 
 namespace PGUI
 {
+
+void setCellSize(float sz);
 //dialog input basic shit
 enum class MSG
 {

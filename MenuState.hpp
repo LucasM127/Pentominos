@@ -9,7 +9,7 @@ public:
 
     struct Icon
     {
-        void set(const Level &level, sf::Font &font);
+        void set(const Level &level, sf::Font &font, float cellSz);
         sf::Text text;
         sf::Texture texture;
         sf::Sprite sprite;
