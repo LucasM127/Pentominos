@@ -68,6 +68,7 @@ void MenuState::loadFolder()
     m_icons[ID_CREATELEVEL].set(Level::m_icons[0], font, cellSz);
     m_icons[ID_CREATEFOLDER].set(Level::m_icons[2], font, cellSz);
     m_icons[ID_SWITCHFOLDER].set(Level::m_icons[1], font, cellSz);
+    m_icons[ID_HELP].set(Level::m_icons[3], font, cellSz);
     for(size_t i = 0; i < (*pp_activeFolder)->levels.size(); ++i)
     {
         m_icons[i+NUM_ICONS].set((*pp_activeFolder)->levels[i], font, cellSz);
@@ -118,10 +119,14 @@ void MenuState::handleEvent(const sf::Event &event)
         {
             if(idSelected != INVALID_ID)
             {
-                if(idSelected == ID_CREATELEVEL || idSelected == ID_CREATEFOLDER)
-                    m_icons[idSelected].sprite.setColor(sf::Color::Red);
-                else if(idSelected == ID_SWITCHFOLDER)
+                if(idSelected == ID_CREATELEVEL && m_icons.size()>=28)
+                    m_icons[idSelected].sprite.setColor(sf::Color(128,128,128));
+                else if(idSelected == ID_CREATELEVEL || idSelected == ID_CREATEFOLDER || idSelected == ID_SWITCHFOLDER)
                     m_icons[idSelected].sprite.setColor(sf::Color::Yellow);
+//                else if(idSelected == ID_SWITCHFOLDER)
+//                    m_icons[idSelected].sprite.setColor(sf::Color(255,128,0));
+                else if(idSelected == ID_HELP)
+                    m_icons[idSelected].sprite.setColor(sf::Color::Red);
                 else
                     m_icons[idSelected].sprite.setColor(sf::Color::Green);
                 m_icons[idSelected].sprite.scale(1.25f,1.25f);
@@ -172,7 +177,10 @@ void MenuState::handleEvent(const sf::Event &event)
                     }
                 }
                 if(idSelected == ID_CREATELEVEL)
+                {
+                    if(m_icons.size()<28)
                     requestStateChange(PLAYGROUND);
+                }
                 if(idSelected == ID_CREATEFOLDER)
                 {
                     PGUI::TextBox textbox(window, L"Enter Folder Name", "", font);
@@ -184,6 +192,10 @@ void MenuState::handleEvent(const sf::Event &event)
                         //load it in the menu
                         loadFolder();
                     }
+                }
+                if(idSelected == ID_HELP)
+                {
+                    requestStateChange(HELP);
                 }
             }
             else

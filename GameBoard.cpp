@@ -482,6 +482,7 @@ DrawSettings::DrawSettings()
 
 void Controller::draw(DrawSettings &settings)
 {
+    //std::cout<<m_updatedCoords.size()<<std::endl;
     for(const Coord &C : m_updatedCoords)
     {
         settings.draw(C, grid, board, idHover, winZoneIsValid);

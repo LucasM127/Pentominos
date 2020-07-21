@@ -28,6 +28,7 @@ private:
         ID_CREATELEVEL = 0,
         ID_CREATEFOLDER,
         ID_SWITCHFOLDER,
+        ID_HELP,
         NUM_ICONS
     };
 

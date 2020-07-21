@@ -3,7 +3,7 @@ SFML=/home/lucas/Headers/SFML-2.5.1
 LIBS=-lsfml-system -lsfml-window -lsfml-graphics
 INC_SFML=-I $(SFML)/include
 LINK= $(LIBS) -L $(SFML)/lib -Wl,-rpath=$(SFML)/lib -lstdc++fs
-OBJS=main.o WelcomeState.o WinState.o MenuState.o PlayState.o PlayGroundState.o GameState.o TextBox.o GameBoard.o Level.o Pentaminos.o Grid.o Colors.o LehmerRandom.o
+OBJS=main.o WelcomeState.o WinState.o MenuState.o PlayState.o PlayGroundState.o HelpState.o GameState.o TextBox.o GameBoard.o Level.o Pentaminos.o Grid.o Colors.o LehmerRandom.o
 
 test: $(OBJS)
 	$(CC) $(OBJS) -o test $(LINK)
@@ -26,6 +26,9 @@ PlayState.o: PlayState.cpp PlayState.hpp GameState.o
 
 PlayGroundState.o: PlayGroundState.cpp PlayGroundState.hpp TextBox.o GameState.o
 	$(CC) PlayGroundState.cpp -c $(INC_SFML)
+
+HelpState.o: HelpState.cpp HelpState.hpp GameState.o
+	$(CC) HelpState.cpp -c $(INC_SFML)
 
 GameState.o: GameState.cpp GameState.hpp GameBoard.o
 	$(CC) GameState.cpp -c $(INC_SFML)

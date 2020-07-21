@@ -9,7 +9,8 @@
 //std::vector<Level> Level::m_levels;
 
 /*
-//128 bytes at a time
+//128 bytes at a time no reason though, just for ease of access in file have the levels be the same size.
+//only thing is name might be longer if is for unicode lettering would be worst 11 letters
 struct LevelData
 {
     uint8_t nameLength;
@@ -200,7 +201,7 @@ const Level Level::m_icons[4] =
     }
 },
 {
-    "Unknown",
+    "Help",
     8,
     10,
     {

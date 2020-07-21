@@ -30,7 +30,8 @@ enum STATE
     PLAY,
     EDIT,
     WIN,
-    PLAYGROUND
+    PLAYGROUND,
+    HELP
 };
 
 enum STATE_ACTION
@@ -62,6 +63,9 @@ protected:
     sf::RenderWindow &window;
     sf::Font &font;//or resource allocator thingy
     sf::Texture &texture;
+
+    void setBottomText(const std::string &string);
+    sf::Text m_bottomText;
 
     GameState(StateMgr &m, Context &context);
     //void requestStateChange(STATE newState, GameState *pOldState = nullptr);//pass a pointer???

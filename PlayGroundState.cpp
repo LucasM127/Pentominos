@@ -43,19 +43,7 @@ PlayGroundState::PlayGroundState(StateMgr &mgr, Context &context)
     grid.setCellTexture({width-1, 0}, getTextureUV(EMPTY), getTextureSize(), Orientation::DEFAULT, false);
     }
     {
-    ////////////
-    float cellSz = grid.getCellSize().x;
-    m_text.setFont(*context.font);
-    m_text.setString("Press [S] to save or [Q] to quit");//"Keep Trying...");
-    //from here
-    m_text.setCharacterSize(cellSz);
-    float textWidth = m_text.getGlobalBounds().width;
-    float width = window.getSize().x;
-    float height = window.getSize().y;
-    m_text.setPosition((width - textWidth)/2.f, height - 2.f * cellSz);
-    //to here like winstate if i like?
-    m_text.setFillColor(sf::Color(128,128,128,128));//::Green);
-    ///////////
+    setBottomText("Press [S] to save or [Q] to quit");
     }
 }
 
@@ -122,8 +110,7 @@ void PlayGroundState::update()
 void PlayGroundState::render()
 {
     grid.render(window);
-    //if(isHovered) 
-        window.draw(m_text);
+    window.draw(m_bottomText);
 }
 
 void PlayGroundState::save()

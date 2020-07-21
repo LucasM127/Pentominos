@@ -25,14 +25,7 @@ WinState::WinState(StateMgr &mgr, Context &context, WINSTATETYPE type)
 }
 
 {
-    m_continueText.setString("Press [SPACE] to continue");
-    m_continueText.setFont(*context.font);
-    m_continueText.setCharacterSize(32);
-    m_continueText.setFillColor(sf::Color(128,128,128,128));
-    float textWidth = m_continueText.getGlobalBounds().width;
-    float width = window.getSize().x;
-    float height = window.getSize().y;
-    m_continueText.setPosition((width - textWidth)/2.f, height - 100.f);
+    setBottomText("Press [SPACE] to continue");
 }
 
     window.setTitle("WINSTATE");
@@ -64,7 +57,7 @@ void WinState::render()//target here ????
 
     window.draw(sprite, &m_shader);
     //window.draw(m_winText);
-    window.draw(m_continueText);
+    window.draw(m_bottomText);
 }
 
 void WinState::handleEvent(const sf::Event &event)

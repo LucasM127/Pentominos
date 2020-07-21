@@ -27,18 +27,7 @@ PlayState::PlayState(StateMgr &mgr, Context &context, int lvl)
 
     window.setTitle(context.activeFolder->levels[lvl].name);//Level::m_preLoadedLevels[lvl].name);
 
-    m_text.setFont(*context.font);
-    m_text.setString("Press [Q] to quit");//[Q]uit to menu");//"Keep Trying...");
-    //from here
-    float cellSz = grid.getCellSize().x;
-    m_text.setCharacterSize(cellSz);
-    float textWidth = m_text.getGlobalBounds().width;
-    float width = window.getSize().x;
-    float height = window.getSize().y;
-    m_text.setPosition((width - textWidth)/2.f, height - 2.f * cellSz);
-    //to here like winstate if i like?
-    m_text.setFillColor(sf::Color(128,128,128,128));//::Green);
-    //m_text.setPosition(10.f,10.f);
+    setBottomText("Press [Q] to quit");
 
     //use the grid board draw function...
     CoordMapper &CM = board.CM;
@@ -129,5 +118,5 @@ void PlayState::update()
 void PlayState::render()
 {
     grid.render(window);
-    window.draw(m_text);
+    window.draw(m_bottomText);
 }

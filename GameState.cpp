@@ -5,6 +5,7 @@
 #include "MenuState.hpp"
 #include "PlayState.hpp"
 #include "PlayGroundState.hpp"
+#include "HelpState.hpp"
 #include <iostream>
 #include <cassert>
 
@@ -81,6 +82,7 @@ StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32
     //m_stateMapping[EDIT] = [this](int x)->GameState*{return new EditBoard(*this, m_context);};
     m_stateMapping[PLAYGROUND] = [this](int x)->GameState*{return new PlayGroundState(*this, m_context);};
     m_stateMapping[WIN] = [this] (int x)->GameState*{return new WinState(*this, m_context, (WINSTATETYPE)x);};//How to send additional DATA?
+    m_stateMapping[HELP] = [this](int x)->GameState*{return new HelpState(*this, m_context);};
 }
 
 StateMgr::~StateMgr()
@@ -196,7 +198,13 @@ void StateMgr::run()
 GameState::GameState(StateMgr &m, Context &context)
      : grid(*context.grid), window(*context.window), font(*context.font), 
      texture(*context.texture), mgr(m)
-{}
+{
+    float cellSz = grid.getCellSize().x;
+    
+    m_bottomText.setFont(*context.font);
+    m_bottomText.setCharacterSize(cellSz * 0.75f);
+    m_bottomText.setFillColor(sf::Color(128,128,128,128));
+}
 
 void GameState::requestStateChange(STATE state, int arg)
 {
@@ -230,7 +238,16 @@ void GameState::render()
 {
     //window.clear(sf::Color::Black);
     grid.render(window);
-    //window.display();
+}
+
+void GameState::setBottomText(const std::string &string)
+{
+    float cellSz = grid.getCellSize().y;
+    m_bottomText.setString(string);
+    float textWidth = m_bottomText.getGlobalBounds().width;
+    float width = window.getSize().x;
+    float height = window.getSize().y;
+    m_bottomText.setPosition((width - textWidth)/2.f, height - 2.f * cellSz);
 }
 
 EditState::EditState(StateMgr &mgr, Context &context)

@@ -33,13 +33,13 @@ struct GameBoard
 public:
     GameBoard(){}
     ~GameBoard(){}
-    void set(const CoordMapper &mapper, const Level &level);//int level);//-1 for a playground
-    void setWinShape(const Level &level);//int level);
+    void set(const CoordMapper &mapper, const Level &level);
+    void setWinShape(const Level &level);
     int positionBlockInFreeSpot(Pentamino &block);
     void pickupBlock(Pentamino &block);
     void placeBlock(Pentamino &block);
     bool isInWinShape(Coord C);
-    int floodFill(Coord C, std::vector<bool> &visited);//bool *visited);
+    int floodFill(Coord C, std::vector<bool> &visited);
     bool checkValidity();
     bool collides(Pentamino &block);
     bool won();
@@ -82,7 +82,6 @@ private:
     bool blockWasMoved;
     bool blockWasPlaced;
     bool blockWasPickedUp;
-    bool blockWasReset;
     bool hoverChanged;
     uint idLastHovered;
     uint idHover;
@@ -98,7 +97,6 @@ private:
     void update();
 };
 
-//then each ... just use the draw function with the struct!
 struct DrawSettings
 {
 public:
@@ -115,7 +113,5 @@ public:
     float hoverSatEffect;
     float hoverLightEffect;
 };
-//winzone draw -> for each piece, draw as if idHover is different
-//redraw the 2 pieces
 
 #endif//GAMEBOARD_HPP
