@@ -236,6 +236,7 @@ void StateMgr::run()
                 if(event.key.code == sf::Keyboard::F)
                 {
                     //toggle fullscreen...
+                    //not posting a resize event in windows :? should be on creation...
                     if(!amFullScreen)
                     {
                         lastWinSz = m_window.getSize();
@@ -248,6 +249,13 @@ void StateMgr::run()
                         m_window.create(sf::VideoMode(lastWinSz.x, lastWinSz.y), "Pentominos");
                         resize(lastWinSz.x, lastWinSz.y);
                     }
+                    //tell the GameStates that a resize event occured, recreating a fullscreen window doesn't trigger a resize event
+                    sf::Event e;
+                    e.type = sf::Event::Resized;
+                    e.size.width = m_window.getSize().x;
+                    e.size.height = m_window.getSize().y;
+                    m_curGameState->onEvent(e);
+
                     amFullScreen = !amFullScreen;
                 }
             }
