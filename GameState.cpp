@@ -37,9 +37,10 @@ StateMgr::StateMgr() : amFullScreen(false)// : m_grid()//22,14,64.f,64.f)//m_gri
     //FULLSCREEN or custom window size...
     //calculate grid size based off of window size....
     {
-        //std::vector<sf::VideoMode> modes = sf::VideoMode::getFullscreenModes();
+        uint width = 48u * BOARD_WIDTH;
+        uint height = 48u * BOARD_HEIGHT;
         //m_window.create(modes[0], "Pentominos", sf::Style::Fullscreen);
-        m_window.create(sf::VideoMode(800, 600), "Pentominos");
+        m_window.create(sf::VideoMode(width, height), "Pentominos");
 
         float boardAspectRatio = float(BOARD_WIDTH) / float(BOARD_HEIGHT);
         unsigned int winWidth  = m_window.getSize().x;
