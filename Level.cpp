@@ -94,7 +94,7 @@ void Folder::load()
 //void saveLevels(const std::vector<Level> &levels, const std::string &fileName)
 void Folder::save()
 {
-    std::ofstream file("Assets/Levels/" + name + ".lvl");
+    std::ofstream file("Assets/Levels/" + name + ".lvl", std::ios::binary);
     if(!file) throw std::runtime_error("Unable to write to " + name);
     
     FileInfoHeader FH;
