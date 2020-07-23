@@ -16,11 +16,8 @@
 //1024 x 768
 //goes weird if width ever exceeds 32 lol -> cause of winShape as uint32_t
 //64.f size built
-StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32,32)// 
+StateMgr::StateMgr() : amFullScreen(false)// : m_grid()//22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32,32)// 
 {
-    //set cellsz of grid after find out size of window...
-    PGUI::setCellSize(32.f);
-    //draw the grid with an offset?
     m_curGameState = nullptr;//???
     pOldState = nullptr;
 
@@ -36,14 +33,39 @@ StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32
     newStateWasRequested = true;
     nextState = WELCOME;
     action = REPLACE;
-//is ok-ish
 
-//    float factor = 1080.f / m_grid.getSize().y;
-//    m_grid.create(22,14,m_grid.getCellSize()*factor);
+    //FULLSCREEN or custom window size...
+    //calculate grid size based off of window size....
+    {
+        //std::vector<sf::VideoMode> modes = sf::VideoMode::getFullscreenModes();
+        //m_window.create(modes[0], "Pentominos", sf::Style::Fullscreen);
+        m_window.create(sf::VideoMode(800, 600), "Pentominos");
+
+        float boardAspectRatio = float(BOARD_WIDTH) / float(BOARD_HEIGHT);
+        unsigned int winWidth  = m_window.getSize().x;
+        unsigned int winHeight = m_window.getSize().y;
+
+        float winAspectRatio = float(winWidth) / float(winHeight);
+
+        unsigned int cellSz;
+        if(winAspectRatio > boardAspectRatio)//the window is 'wider' than taller, black bars on left and right
+            cellSz = float(winHeight) / float(BOARD_HEIGHT);
+        else
+            cellSz = float(winWidth) / float(BOARD_WIDTH);
+            
+        unsigned int x_offset = (winWidth - (cellSz * BOARD_WIDTH)) / 2;
+        unsigned int y_offset = (winHeight - (cellSz * BOARD_HEIGHT)) / 2;
+        
+        m_grid.setOffset(float(x_offset), float(y_offset));
+
+        m_grid.resize(BOARD_WIDTH, BOARD_HEIGHT, float(cellSz), float(cellSz));
+
+        PGUI::setCellSize(float(cellSz/2u));
+    }
 
     //set the window and grid sizes here... common to all states.
-    float width = m_grid.getSize().x;
-    float height = m_grid.getSize().y;
+    //float width = m_grid.getSize().x;
+    //float height = m_grid.getSize().y;
 
 //    m_grid.setOffset((1920-width)/2,(1080-height)/2);
 /*
@@ -63,13 +85,14 @@ StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32
     //::Window win = XCreateSimpleWindow(display, RootWindow(display, DefaultScreen(display)), 0,0, 0, 0, 0, 0,0);
     //HACK to prevent 'jump'
     //m_window.create(sf::VideoMode(1, 1), "Pentominos", sf::Style::Close);
-    m_window.create(sf::VideoMode(width, height), "Pentominos", sf::Style::Close);
+    //m_window.create(sf::VideoMode(1920, 1080), "Pentominos", sf::Style::Fullscreen);
+    //m_window.create(sf::VideoMode(width, height), "Pentominos", sf::Style::Close);
     //m_window.setPosition({1920+(1920 - (int)width)/2 , (1080 - (int)height)/2});//hmmmm
     //m_window.setSize({(uint)width,(uint)height});//int -> unsigned int
-    sf::View view;
-    view.setCenter(width/2, height/2);
-    view.setSize(width, height);
-    m_window.setView(view);
+    //sf::View view;
+    //view.setCenter(width/2, height/2);
+    //view.setSize(width, height);
+    //m_window.setView(view);
 
     //load assets
     //TODO: TEST FOR LOADFAIL... what to do... abstract out?
@@ -83,6 +106,18 @@ StateMgr::StateMgr() : m_grid(22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32
     m_stateMapping[PLAYGROUND] = [this](int x)->GameState*{return new PlayGroundState(*this, m_context);};
     m_stateMapping[WIN] = [this] (int x)->GameState*{return new WinState(*this, m_context, (WINSTATETYPE)x);};//How to send additional DATA?
     m_stateMapping[HELP] = [this](int x)->GameState*{return new HelpState(*this, m_context);};
+
+    sf::Image image;
+    uint8_t colors[16] = {
+        0x00,0x00,0xFF,0x80,//green
+        0xFF,0x00,0x00,0x80,
+        0x00,0xFF,0x00,0x80,
+        0xFF,0xFF,0x00,0x80};//yellow
+    image.create(2,2,colors);//rgba
+    m_bgTexture.loadFromImage(image);
+    m_bgTexture.setSmooth(true);
+    m_bgSprite.setTexture(m_bgTexture);
+    m_bgSprite.setScale((float)m_window.getSize().x/2.f, (float)m_window.getSize().y/2.f);
 }
 
 StateMgr::~StateMgr()
@@ -90,6 +125,36 @@ StateMgr::~StateMgr()
     delete m_curGameState;
     if(pOldState) delete pOldState;
     delete m_context.activeFolder;
+}
+
+void StateMgr::resize(uint winWidth, uint winHeight)
+{
+    m_window.setView(sf::View(sf::FloatRect(0,0,float(winWidth), float(winHeight))));
+
+    float boardAspectRatio = float(BOARD_WIDTH) / float(BOARD_HEIGHT);
+    //unsigned int winWidth  = m_window.getSize().x;
+    //unsigned int winHeight = m_window.getSize().y;
+    //winWidth  = m_window.getSize().x;
+    //winHeight = m_window.getSize().y;
+
+    float winAspectRatio = float(winWidth) / float(winHeight);
+
+    unsigned int cellSz;
+    if(winAspectRatio > boardAspectRatio)//the window is 'wider' than taller, black bars on left and right
+        cellSz = float(winHeight) / float(BOARD_HEIGHT);
+    else
+        cellSz = float(winWidth) / float(BOARD_WIDTH);
+        
+    unsigned int x_offset = (winWidth - (cellSz * BOARD_WIDTH)) / 2;
+    unsigned int y_offset = (winHeight - (cellSz * BOARD_HEIGHT)) / 2;
+    
+    m_grid.setOffset(float(x_offset), float(y_offset));
+
+    m_grid.resize(BOARD_WIDTH, BOARD_HEIGHT, float(cellSz), float(cellSz));
+
+    PGUI::setCellSize(float(cellSz/2u));
+
+    m_bgSprite.setScale(float(winWidth)/2.f, float(winHeight)/2.f);
 }
 
 void StateMgr::run()
@@ -157,8 +222,34 @@ void StateMgr::run()
 //        m_window.waitEvent(event);
         while (m_window.pollEvent(event))
         {
-            m_curGameState->handleEvent(event);
-            if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) m_window.close();
+            if(event.type == sf::Event::Resized)
+            {
+                //resize the grid...
+                resize(event.size.width, event.size.height);
+            }
+            m_curGameState->onEvent(event);//handleEvent(event);
+            if(event.type == sf::Event::KeyPressed)
+            {
+                if(event.key.code == sf::Keyboard::Escape)
+                    m_window.close();
+                if(event.key.code == sf::Keyboard::F)
+                {
+                    //toggle fullscreen...
+                    if(!amFullScreen)
+                    {
+                        lastWinSz = m_window.getSize();
+                        std::vector<sf::VideoMode> modes = sf::VideoMode::getFullscreenModes();
+                        m_window.create(modes[0], "Pentominos", sf::Style::Fullscreen);
+                        resize(modes[0].width, modes[0].height);
+                    }
+                    else
+                    {
+                        m_window.create(sf::VideoMode(lastWinSz.x, lastWinSz.y), "Pentominos");
+                        resize(lastWinSz.x, lastWinSz.y);
+                    }
+                    amFullScreen = !amFullScreen;
+                }
+            }
             if(event.type == sf::Event::Closed) m_window.close();
 
             m_curGameState->update();//updates with the events as a board game
@@ -183,8 +274,10 @@ void StateMgr::run()
         {
             while(renderAccumulator >= refreshTime) renderAccumulator -= refreshTime;
             m_window.clear(sf::Color::Black);
+            //draw a background effect for the splash zone...
+            m_window.draw(m_bgSprite);
             m_curGameState->render();//draw the grid...
-            m_window.draw(fpsText);
+            //m_window.draw(fpsText);
             m_window.display();
 
             //numFrames++;
@@ -240,6 +333,18 @@ void GameState::render()
     grid.render(window);
 }
 
+void GameState::onEvent(const sf::Event &event)
+{
+    if(event.type == sf::Event::Resized)
+    {
+        float cellSz = grid.getCellSize().y;
+        m_bottomText.setCharacterSize(cellSz * 0.75f);
+        float textWidth = m_bottomText.getGlobalBounds().width;
+        m_bottomText.setPosition((event.size.width - textWidth)/2.f, event.size.height - 2.f * cellSz - grid.getOffset().y);
+    }
+    handleEvent(event);
+}
+
 void GameState::setBottomText(const std::string &string)
 {
     float cellSz = grid.getCellSize().y;
@@ -247,7 +352,7 @@ void GameState::setBottomText(const std::string &string)
     float textWidth = m_bottomText.getGlobalBounds().width;
     float width = window.getSize().x;
     float height = window.getSize().y;
-    m_bottomText.setPosition((width - textWidth)/2.f, height - 2.f * cellSz);
+    m_bottomText.setPosition((width - textWidth)/2.f, height - 2.f * cellSz - grid.getOffset().y);
 }
 
 EditState::EditState(StateMgr &mgr, Context &context)

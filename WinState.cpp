@@ -62,7 +62,10 @@ void WinState::render()//target here ????
 
 void WinState::handleEvent(const sf::Event &event)
 {
-
+    if(event.type == sf::Event::Resized)
+    {
+        m_renderTexture.create(event.size.width, event.size.height);
+    }
     if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
     {
         requestStateChange(MENU);

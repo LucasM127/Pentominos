@@ -54,6 +54,7 @@ public:
     virtual ~GameState(){}
     virtual void init(){}
     virtual void exit(){}
+    void onEvent(const sf::Event &event);
     virtual void handleEvent(const sf::Event &event){}
     virtual void update(){}
     virtual void render();
@@ -106,6 +107,13 @@ private:
   Context m_context;
   
   std::unordered_map<STATE, std::function<GameState*(int)> > m_stateMapping;
+
+  void resize(unsigned int, unsigned int);
+  bool amFullScreen;
+  sf::Vector2u lastWinSz;
+
+  sf::Texture m_bgTexture;
+  sf::Sprite m_bgSprite;
 };
 
 class EditState : public GameState

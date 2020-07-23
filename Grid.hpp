@@ -34,8 +34,8 @@ struct CoordMapper
 class Grid
 {
 public:
-    Grid(unsigned int width = 10, unsigned int height = 10, float cellSize_x = 20.f, float cellSize_y = 20.f);
-    void create(unsigned int width, unsigned int height, float cellSize_x, float cellSize_y);
+    Grid(unsigned int width = 0, unsigned int height = 0, float cellSize_x = 0.f, float cellSize_y = 0.f);
+    void resize(unsigned int width, unsigned int height, float cellSize_x, float cellSize_y);
     void setOffset(float x, float y){m_x_offset = x; m_y_offset = y;}
     const unsigned int getWidth() const { return m_mapper.width; }
     const unsigned int getHeight() const { return m_mapper.height; }

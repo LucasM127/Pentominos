@@ -2,27 +2,18 @@
 #include "Colors.hpp"
 #include "LehmerRandom.hpp"
 
-bool renderTestBool;
-
 //this is a vertex mapper
 Grid::Grid(unsigned int width, unsigned int height, float cellSize_x, float cellSize_y)
-            : m_cellSize(cellSize_x, cellSize_y), m_texMap(nullptr), m_mapper(width, height)
+            : m_vbuffer(sf::Triangles, sf::VertexBuffer::Dynamic), m_cellSize(cellSize_x, cellSize_y), m_texMap(nullptr),
+              m_texSz(128.f), m_mapper(width, height), m_x_offset(0.f), m_y_offset(0.f)
 {
     srand(time(NULL));
-    m_randSeed = rand();//hacky
+    m_randSeed = rand();
 
-    m_texSz = 128.f;
-    
-    create(width, height, cellSize_x, cellSize_y);
-
-    m_vbuffer.setPrimitiveType(sf::Triangles);
-    //test???
-    m_vbuffer.setUsage(sf::VertexBuffer::Dynamic);
-
-    m_x_offset = m_y_offset = 0.f;
+    resize(width, height, cellSize_x, cellSize_y);
 }
 
-void Grid::create(unsigned int width, unsigned int height, float cellSize_x, float cellSize_y)
+void Grid::resize(unsigned int width, unsigned int height, float cellSize_x, float cellSize_y)
 {
     m_mapper.width = width;
     m_mapper.height = height;
@@ -62,16 +53,6 @@ void Grid::clear(sf::Color color)
     amModified = true;
 }
 
-    /***
-    {//Calculating and seeding spatial random function
-    //(x & 0xFFFF) << 16 | (y & 0xFFFF); //copypasta OLC
-    //8bits + 12bits + 12bits = 32bit uint_32
-    srand((randSeed & 0xFF) << 24 |(C.i & 0xFFF) << 12 | (C.j & 0xFFF));
-    }
-
-    if(v) color = variate(color, rand()%16);
-    color = alphaBlend(color, m_cellShapes[id].color);
-***/
 //set the variation here ??? again
 //and the texture rotation too ???
 void Grid::setCellColor(Coord C, sf::Color color, bool overlaps)

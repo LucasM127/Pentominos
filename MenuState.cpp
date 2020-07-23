@@ -27,15 +27,17 @@ void MenuState::Icon::set(const Level &level, sf::Font &font, float cellSz)
         }
     }
 
-    texture.loadFromImage(image);
+    texture.loadFromImage(image);//super fast
+    //sf::sleep(sf::milliseconds(200));
 //should maybe have a default texture in case it takes long to load a texture ?????
     sprite.setTexture(texture);
     sprite.setOrigin(12.f,12.f);
+    
     sprite.scale(cellSz * 2.f/24.f,cellSz * 2.f/24.f);//2 * cellsize...
 
     //only some way to set 'centered' multiline
     text.setFont(font);
-    text.setCharacterSize(cellSz/3);// 20);//64 -> 20 ratio ? 64 / 4
+    text.setCharacterSize(cellSz/3.f);
     text.setFillColor(sf::Color::White);
     text.setString(level.name);
     text.setStyle(sf::Text::Underlined);
@@ -73,34 +75,51 @@ void MenuState::loadFolder()
     {
         m_icons[i+NUM_ICONS].set((*pp_activeFolder)->levels[i], font, cellSz);
     }
-    
-    //position
-    for(unsigned int i = 0; i < m_icons.size(); ++i)
-    {
-        float sz = grid.getCellSize().x;
-        float x_pos = 2*sz + 3*sz * (i%7);
-        float y_pos = 2*sz + 3*sz * (i/7);
-        m_icons[i].sprite.setPosition(x_pos, y_pos);
-        m_icons[i].text.setPosition(x_pos, y_pos + sz/2.f);//set text sz (fn of cellsize)
-    }
 
     {
         m_folderText.setFont(font);
-        m_folderText.setCharacterSize((unsigned int)grid.getCellSize().y);
         m_folderText.setFillColor(sf::Color::White);
         m_folderText.setString((*pp_activeFolder)->name);//"Default Levels");
         float width = m_folderText.getLocalBounds().width;
         m_folderText.setOrigin(width/2.f,0.f);
-        m_folderText.setPosition(grid.getSize().x/2.f + grid.getOffset().x,0.f);
     }
 
-    std::cout<<"Loading menu took "<<clock.restart().asMilliseconds()<<" ms\n";
+    position();
+
+    //std::cout<<"Loading menu took "<<clock.restart().asMilliseconds()<<" ms\n";
+}
+
+void MenuState::position()
+{
+    //position & scale...
+    //icon function? if it becomes a pain maybe
+    for(unsigned int i = 0; i < m_icons.size(); ++i)
+    {
+        float sz = grid.getCellSize().x;
+        float x_pos = 2*sz + 3*sz * (i%7) + grid.getOffset().x;
+        float y_pos = 2*sz + 3*sz * (i/7) + grid.getOffset().y;//these are 'integer' values assuming cellsz is integer
+        m_icons[i].sprite.setPosition(x_pos, y_pos);
+        m_icons[i].sprite.setScale(2.f*sz / 24.f, 2.f*sz / 24.f);
+        m_icons[i].text.setPosition(x_pos, y_pos + sz/2.f);//set text sz (fn of cellsize)
+        m_icons[i].text.setCharacterSize(sz/3.f);
+        float width = m_icons[i].text.getLocalBounds().width;
+        m_icons[i].text.setOrigin(width/2,0);
+    }
+
+    {
+        m_folderText.setCharacterSize((unsigned int)grid.getCellSize().y);
+        m_folderText.setPosition(grid.getSize().x/2.f + grid.getOffset().x, grid.getOffset().y);
+        float width = m_folderText.getLocalBounds().width;
+        m_folderText.setOrigin(width/2.f,0.f);
+    }
 }
 
 void MenuState::handleEvent(const sf::Event &event)
 {
     sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
+    if(event.type == sf::Event::Resized)
+        position();
     if(event.type == sf::Event::MouseMoved)
     {
         idLastSelected = idSelected;
@@ -163,14 +182,14 @@ void MenuState::handleEvent(const sf::Event &event)
                         s.erase(s.end()-4, s.end());
                         files.push_back(s);
                     }
-                    for(auto &s : files) std::cout<<s<<std::endl;
+                    //for(auto &s : files) std::cout<<s<<std::endl;
                     
                     //use filedirectory iterator...
                     PGUI::ListBox listbox(window, "List contents", font, files);//, "Folders...");
                     PGUI::MSG ret = listbox.run();
                     if(ret == PGUI::MSG::LIST_ITEM_CHOSE)
                     {
-                        std::cout<<"Item chosen was: "<<files[listbox.getChosenId()]<<std::endl;
+                        //std::cout<<"Item chosen was: "<<files[listbox.getChosenId()]<<std::endl;
                         delete *pp_activeFolder;
                         *pp_activeFolder = new Folder(files[listbox.getChosenId()]);
                         loadFolder();
@@ -206,7 +225,7 @@ void MenuState::handleEvent(const sf::Event &event)
                     PGUI::MSG ret = textbox.run();
                     //?
                     if(ret == PGUI::MSG::TEXT_CHANGED)
-                    {
+                    {//can optimize this
                         (*pp_activeFolder)->levels[idSelected-NUM_ICONS].name = textbox.getString();
                         (*pp_activeFolder)->save();
                         loadFolder();
@@ -235,7 +254,7 @@ void MenuState::handleEvent(const sf::Event &event)
                             s.erase(s.end()-4, s.end());
                             files.push_back(s);
                         }
-                        for(auto &s : files) std::cout<<s<<std::endl;
+                        //for(auto &s : files) std::cout<<s<<std::endl;
                         
                         //use filedirectory iterator...
                         PGUI::ListBox listbox(window, "List contents", font, files);//, "Folders...");

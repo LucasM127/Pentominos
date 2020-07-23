@@ -9,6 +9,10 @@ const unsigned int WINZONE_ID = 14;
 const unsigned int BACKGROUND_ID = 15;
 const unsigned int INVALID_ID = -1;
 
+//fixed playable gameboard size for level loading stuffs
+const unsigned int BOARD_WIDTH = 22;
+const unsigned int BOARD_HEIGHT = 14;
+
 //0x0F mask for id
 //0xF0 mask for location in shape..
 struct CellData

@@ -32,6 +32,7 @@ PlayGroundState::PlayGroundState(StateMgr &mgr, Context &context)
         }
 
     //buttons?
+    /*
     {
     unsigned int width = grid.getMapper().width;
     unsigned int height = grid.getMapper().height;
@@ -41,7 +42,7 @@ PlayGroundState::PlayGroundState(StateMgr &mgr, Context &context)
 
     grid.setCellColor({width-1, 0}, sf::Color::White);
     grid.setCellTexture({width-1, 0}, getTextureUV(EMPTY), getTextureSize(), Orientation::DEFAULT, false);
-    }
+    }*/
     {
     setBottomText("Press [S] to save or [Q] to quit");
     }
@@ -52,14 +53,6 @@ PlayGroundState::~PlayGroundState(){}
 //COMMON over PlayState and PlayGroundPlay State (tho PlayGround has different event for saving!)
 void PlayGroundState::handleEvent(const sf::Event &event)
 {
-    //manages it.  but is NOT a state
-    //board.handleEvent(event); ??? more a grid Manager
-    //or just have it as GUI->handleEvent() then Board->handleEvent()
-    //Board->render()?  but why it is not the boards job
-    //State-> board update  This is shared too...
-    //feel like should inherit board manipulation ... public BoardManipulator
-    //then draw is different for each, but not too different
-    //handleevent-> GUI->handle event, then BaseManipulator->handleEvent, then local->handle event
     switch (event.type)
     {
     case sf::Event::KeyPressed:
@@ -77,6 +70,7 @@ void PlayGroundState::handleEvent(const sf::Event &event)
             break;
         }
         break;
+        /*
     case sf::Event::MouseMoved:
         {
         sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
@@ -90,7 +84,7 @@ void PlayGroundState::handleEvent(const sf::Event &event)
         {
             if(isHovered) requestStateChange(MENU);
         }
-    }
+    }*/
     default:
         break;
     }
@@ -98,14 +92,14 @@ void PlayGroundState::handleEvent(const sf::Event &event)
     m_controller.handleEvent(event);
     m_controller.draw(m_drawSettings);
 }
-
+/*
 void PlayGroundState::update()
 {
     if(isHovered)
         exit.brighten(grid);
     else
         exit.setColor(grid);
-}
+}*/
 
 void PlayGroundState::render()
 {

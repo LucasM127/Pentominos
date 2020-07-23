@@ -21,7 +21,7 @@ private:
     sf::Text m_folderText;
     //hmm
     Folder **pp_activeFolder;
-    std::vector<Icon> m_icons;//yay! -> more really need a name, and winzone map
+    std::vector<Icon> m_icons;//load the texture separately???
     uint idSelected, idLastSelected;
     enum : unsigned int
     {
@@ -33,4 +33,5 @@ private:
     };
 
     void loadFolder();
+    void position();
 };

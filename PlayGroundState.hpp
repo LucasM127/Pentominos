@@ -12,7 +12,7 @@ public:
     PlayGroundState(StateMgr &mgr, Context &context);
     ~PlayGroundState();
     void handleEvent(const sf::Event &event) override;
-    void update() override;
+    //void update() override;
     void render() override;
     //void tick(){}//ie update but thinkging
     

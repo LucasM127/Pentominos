@@ -288,7 +288,7 @@ sf::Color GunMetal(0x2A3036);//dark bg
 
 sf::Color blockColors[14] = 
 {
-    /*
+    / *
     sf::Color(174, 95, 69, 192),
     sf::Color(0, 158, 98, 192),
     sf::Color(45, 89, 174, 192),

@@ -138,12 +138,12 @@ WelcomeState::WelcomeState(StateMgr &mgr, Context &context)
     }
     window.setTitle(level.name);
 
-    for(int i =0; i< width; i++)
-        for(int j= 0; j<height; j++)
+    for(uint i =0; i< width; i++)
+        for(uint j= 0; j<height; j++)
             draw(Coord(i,j));
     
-    for(int i =0; i< width; i++)
-        for(int j= 0; j<height; j++)
+    for(uint i =0; i< width; i++)
+        for(uint j= 0; j<height; j++)
             setGridCoordTexBasedOnDataAtCoord(grid, m_data, Coord(i,j));
 }
 
@@ -191,6 +191,7 @@ void WelcomeState::handleEvent(const sf::Event &event)
 void WelcomeState::draw(Coord C)
 {
     if(checkBit(m_data[C.j], C.i))
+//                grid.setCellColor(C, sf::Color(64,64,64,160));
                 grid.setCellColor(C, sf::Color(255 * C.i / 22,255 * C.j / 13,128));//sf::Color::White);
     else grid.setCellColor(C, sf::Color::Black);
 }

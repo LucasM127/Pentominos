@@ -314,6 +314,7 @@ void Controller::resetPiece()
 {
     saveCoords();
     if(p_activeBlock == nullptr) return;
+    //set orientation is not fixed rightly... has a bug
     p_activeBlock->setOrientation(lastOrientation, lastFlipped);
     p_activeBlock->m_pos = lastPos;
     board.placeBlock(*p_activeBlock);
