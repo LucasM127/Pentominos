@@ -12,6 +12,7 @@ public:
     void handleEvent(const sf::Event &event) override;
     void update() override;
     void render() override;
+    void paint() override;
     //void tick(){}//ie update but thinkging
     
 private:

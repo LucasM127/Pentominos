@@ -5,7 +5,7 @@
 //free function put here for now
 #include <fstream>
 //some way to save ORIENTATION AND TEXID INFO with the coords....
-void setGridCoordTexBasedOnDataAtCoord(Grid &grid, std::vector<uint32_t> &data, Coord C)
+void setGridCoordTexBasedOnDataAtCoord(Grid &grid, std::vector<uint32_t> &data, Coord C, ViewRect &viewRect)
 {
     //assumes C is a valid coordinate.
     enum DIR {UP, LEFT, DOWN, RIGHT};
@@ -18,9 +18,16 @@ void setGridCoordTexBasedOnDataAtCoord(Grid &grid, std::vector<uint32_t> &data, 
     Coord left(C.i-1, C.j);
     Coord right(C.i+1, C.j);
 
+    CoordMapper CM;
+    CM.width = viewRect.width;
+    CM.height = viewRect.height;
+
     auto checkCoord = [&](Coord x)->bool
-    {
-        if(!grid.getMapper().isValid(x))
+    {//not the grid though!!!!
+        //if(!grid.getMapper().isValid(x))
+        //x.i -= viewRect.P.i;
+        //x.j -= viewRect.P.j;
+        if(!CM.isValid(x))
             return false;
         return checkBit(data[x.j], x.i);
     };
@@ -105,6 +112,7 @@ void setGridCoordTexBasedOnDataAtCoord(Grid &grid, std::vector<uint32_t> &data, 
     bool isBG = false;
     if(!checkCoord(C))
     {
+        return;
         isBG = true;
         texId = BACKGROUND_TEXTURE;
     }//assumed??? lol
@@ -113,19 +121,20 @@ void setGridCoordTexBasedOnDataAtCoord(Grid &grid, std::vector<uint32_t> &data, 
     int x_off = texId%4;
     int y_off = texId/4;
     sf::Vector2f uvpos(128.f * (float)x_off, 128.f * (float)y_off);
-    if(isBG) grid.setCellTexture(C, uvpos, {128.f,128.f});
+    Coord C_grid = viewRect.transform(C);
+    if(isBG) grid.setCellTexture(C_grid, uvpos, {128.f,128.f});
     else
-        grid.setCellTexture(C, uvpos, {128.f, 128.f}, orientation, false);
+        grid.setCellTexture(C_grid, uvpos, {128.f, 128.f}, orientation, false);
 }
 
-//copy from setWinShape in gameboard.cpp
+//set the display Rect at constructor stage too!!!
 WelcomeState::WelcomeState(StateMgr &mgr, Context &context)
     : GameState(mgr, context)
 {
     const Level &level = Level::intro;
     grid.setTexMap(context.texture);//uhuh
-    uint height = grid.getHeight();
-    uint width = grid.getWidth();
+    uint height = m_viewRect.height;//grid.getHeight();
+    uint width = m_viewRect.width;// grid.getWidth();
 
     uint x_offset = (width - level.width)/2;
     uint y_offset = (height - level.height)/2;
@@ -138,13 +147,37 @@ WelcomeState::WelcomeState(StateMgr &mgr, Context &context)
     }
     window.setTitle(level.name);
 
+    paint();
+    
+}//think it...
+
+void WelcomeState::paint()
+{//passing it local coordinates...
+    for(uint i =0; i< m_viewRect.width; i++)
+        for(uint j= 0; j<m_viewRect.height; j++)
+            draw( Coord(i,j) );
+    
+    for(uint i =0; i< m_viewRect.width; i++)
+        for(uint j= 0; j<m_viewRect.height; j++)
+            setGridCoordTexBasedOnDataAtCoord(grid, m_data, Coord(i,j), m_viewRect);
+    /*
+    for(uint i =m_viewRect.P.i; i< m_viewRect.P.i + m_viewRect.width; i++)
+        for(uint j= m_viewRect.P.j; j<m_viewRect.P.j + m_viewRect.height; j++)
+            draw( Coord(i,j) );
+    
+    for(uint i =m_viewRect.P.i; i< m_viewRect.P.i + m_viewRect.width; i++)
+        for(uint j= m_viewRect.P.j; j<m_viewRect.P.j + m_viewRect.height; j++)
+            setGridCoordTexBasedOnDataAtCoord(grid, m_data, Coord(i,j), m_viewRect);
+            */
+    /*
     for(uint i =0; i< width; i++)
         for(uint j= 0; j<height; j++)
-            draw(Coord(i,j));
+            draw( Coord(i,j) );
     
     for(uint i =0; i< width; i++)
         for(uint j= 0; j<height; j++)
             setGridCoordTexBasedOnDataAtCoord(grid, m_data, Coord(i,j));
+            */
 }
 
 /*
@@ -160,7 +193,7 @@ void EditBoard::update()
 
 void WelcomeState::handleEvent(const sf::Event &event)
 {
-    if(event.type == sf::Event::KeyPressed || event.type == sf::Event::MouseButtonPressed)
+    if(/*event.type == sf::Event::KeyPressed || */event.type == sf::Event::MouseButtonPressed)
         requestStateChange(MENU);
 //    sf::Event event;
 //    window.waitEvent(event);
@@ -190,8 +223,9 @@ void WelcomeState::handleEvent(const sf::Event &event)
 //colour
 void WelcomeState::draw(Coord C)
 {
+    Coord C_grid = m_viewRect.transform(C);
     if(checkBit(m_data[C.j], C.i))
 //                grid.setCellColor(C, sf::Color(64,64,64,160));
-                grid.setCellColor(C, sf::Color(255 * C.i / 22,255 * C.j / 13,128));//sf::Color::White);
-    else grid.setCellColor(C, sf::Color::Black);
+                grid.setCellColor(C_grid, sf::Color(255 * C.i / 22,255 * C.j / 13,128));//sf::Color::White);
+    else grid.setCellColor(C_grid, sf::Color::Black);
 }

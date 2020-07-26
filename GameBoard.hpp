@@ -13,6 +13,20 @@ const unsigned int INVALID_ID = -1;
 const unsigned int BOARD_WIDTH = 22;
 const unsigned int BOARD_HEIGHT = 14;
 
+struct ViewRect
+{
+    inline void set(unsigned int px, unsigned int py, unsigned int w, unsigned int h)
+    {
+        P.i = px;
+        P.j = py;
+        width = w;
+        height = h;
+    }
+    inline Coord transform(Coord C){ return (P + C); }
+    Coord P;
+    unsigned int width, height;
+};
+
 //0x0F mask for id
 //0xF0 mask for location in shape..
 struct CellData
@@ -63,13 +77,18 @@ struct DrawSettings;
 class Controller
 {
 public:
-    Controller(GameBoard &_board, Grid &_grid);
+    Controller(GameBoard &_board, Grid &_grid, ViewRect &rect, sf::Color c, TexAtlasID tid);
     void handleEvent(const sf::Event &event);
     void draw(DrawSettings &S);
+    void drawAll(DrawSettings &S);
 private:
     GameBoard &board;
     Grid &grid;
     Coord m_activeCoord;
+
+    ViewRect &m_viewRect;//reference...
+    sf::Color borderColor;
+    TexAtlasID borderTexID;
 
     std::vector<Pentamino> m_startingBlocks;
     std::vector<Coord> m_updatedCoords;
@@ -105,8 +124,8 @@ struct DrawSettings
 {
 public:
     DrawSettings();
-    void draw(Coord C, Grid &grid, GameBoard &board,
-                unsigned int idHover = INVALID_ID,
+    bool draw(Coord C, Grid &grid, GameBoard &board, ViewRect &viewRect,
+                sf::Color borderColor, TexAtlasID borderTexID, unsigned int idHover = INVALID_ID, 
                 bool winZoneValid = true);
     std::vector<float> pieceHues;
     int pieceAlphaTransparency;

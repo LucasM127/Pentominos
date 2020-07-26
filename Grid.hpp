@@ -17,7 +17,8 @@ struct Coord
     Coord operator + (const Coord &C) {return Coord(i + C.i, j + C.j);}
     bool operator != (const Coord &C) {return i != C.i || j != C.j;}
     unsigned int i, j;
-};//negative coordinates?  need an offset in the coord mapper
+};
+
 
 typedef sf::Vector2f Vec2;
 

@@ -18,8 +18,10 @@
 
 //int lvl... thinking about this....
 PlayState::PlayState(StateMgr &mgr, Context &context, int lvl)
-    : GameState(mgr, context), board(*context.board), m_controller(board, grid)/*controller(*context.controller)*/
+    : GameState(mgr, context), board(*context.board), m_controller(board, grid, m_viewRect, context.borderColor, context.borderTexID)/*controller(*context.controller)*/
 {
+    //tell the controller or drawer or something the board view offset to use...
+
     LOG("Created PlayState");
     //Level L = (*context.levels)[lvl];
 
@@ -30,16 +32,15 @@ PlayState::PlayState(StateMgr &mgr, Context &context, int lvl)
     setBottomText("Press [Q] to quit");
 
     //use the grid board draw function...
+    /*
     CoordMapper &CM = board.CM;
     for(uint w = 0; w<CM.width; w++)
         for(uint h = 0; h<CM.height;h++)
         {
-            m_drawSettings.draw({w,h}, grid, board);
-            //changedCoords.emplace_back(w,h);
-            //draw(Coord(w,h));
+            m_drawSettings.draw({w,h}, grid, board, m_viewRect);
         }
-    
-    
+    */
+   onPaint();
 }
 
 PlayState::~PlayState(){}
@@ -119,4 +120,13 @@ void PlayState::render()
 {
     grid.render(window);
     window.draw(m_bottomText);
+}
+
+void PlayState::paint()
+{
+    //redraw the winzone
+    //redraw all the pieces
+    //and the hovered piece.
+    //use the active controller to do it.
+    m_controller.drawAll(m_drawSettings);
 }

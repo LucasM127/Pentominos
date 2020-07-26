@@ -6,12 +6,6 @@
 #include <unordered_map>//map enum to new type...
 #include <functional>
 
-class PWindow : public sf::RenderWindow
-{
-private:
-    void onCreate() override;
-};
-
 //kinda like my globals
 struct Context
 {
@@ -21,6 +15,9 @@ struct Context
     sf::Font *font;
     sf::Texture *texture;
     Folder *activeFolder;
+    ViewRect viewRect;
+    sf::Color borderColor;
+    TexAtlasID borderTexID;
 };
 
 enum STATE
@@ -59,14 +56,21 @@ public:
     virtual void update(){}
     virtual void render();
     virtual void tick(){}//ie update but thinkging
+    void onPaint();
+    virtual void paint(){}
+    
 protected:
     Grid &grid;//common grid across the states... just displays different things...
     sf::RenderWindow &window;
     sf::Font &font;//or resource allocator thingy
     sf::Texture &texture;
+    sf::Color m_borderColor;
+    TexAtlasID m_borderTexID;
 
     void setBottomText(const std::string &string);
     sf::Text m_bottomText;
+
+    ViewRect m_viewRect;
 
     GameState(StateMgr &m, Context &context);
     //void requestStateChange(STATE newState, GameState *pOldState = nullptr);//pass a pointer???
@@ -76,6 +80,8 @@ protected:
     GameState *getPushedState();
 private:
     StateMgr &mgr;
+
+    void setViewRect(unsigned int px, unsigned int py, unsigned int w, unsigned int h);
 };
 
 class StateMgr

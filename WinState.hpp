@@ -27,4 +27,6 @@ private:
     sf::Text m_continueText;
     sf::RenderTexture m_renderTexture;
     WINSTATETYPE m_type;
+
+    void paint() override;
 };

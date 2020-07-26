@@ -9,6 +9,7 @@ class WelcomeState : public GameState
 public:
     WelcomeState(StateMgr &mgr, Context &context);
     void handleEvent(const sf::Event &event) override;
+    void paint() override;
 private:
 //    sf::Vector2f mousePos;
 //    Coord mouseCoord;

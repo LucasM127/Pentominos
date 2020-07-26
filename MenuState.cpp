@@ -56,7 +56,8 @@ MenuState::MenuState(StateMgr &mgr, Context &context)
     window.setTitle("Pentaminos");
 
     idSelected = -1;
-    grid.clear(sf::Color::Black);
+    //grid.clear(sf::Color::Black);
+    onPaint();
 
     loadFolder();
 }
@@ -91,13 +92,14 @@ void MenuState::loadFolder()
 
 void MenuState::position()
 {
+    //in view area...
     //position & scale...
     //icon function? if it becomes a pain maybe
+    float sz = grid.getCellSize().x;
     for(unsigned int i = 0; i < m_icons.size(); ++i)
     {
-        float sz = grid.getCellSize().x;
-        float x_pos = 2*sz + 3*sz * (i%7) + grid.getOffset().x;
-        float y_pos = 2*sz + 3*sz * (i/7) + grid.getOffset().y;//these are 'integer' values assuming cellsz is integer
+        float x_pos = 2*sz + 3*sz * (i%7) + grid.getOffset().x + m_viewRect.P.i * sz;;//add the padding of our view
+        float y_pos = 2*sz + 3*sz * (i/7) + grid.getOffset().y + m_viewRect.P.j * sz;;//these are 'integer' values assuming cellsz is integer
         m_icons[i].sprite.setPosition(x_pos, y_pos);
         m_icons[i].sprite.setScale(2.f*sz / 24.f, 2.f*sz / 24.f);
         m_icons[i].text.setPosition(x_pos, y_pos + sz/2.f);//set text sz (fn of cellsize)
@@ -108,7 +110,7 @@ void MenuState::position()
 
     {
         m_folderText.setCharacterSize((unsigned int)grid.getCellSize().y);
-        m_folderText.setPosition(grid.getSize().x/2.f + grid.getOffset().x, grid.getOffset().y);
+        m_folderText.setPosition(grid.getSize().x/2.f + grid.getOffset().x, grid.getOffset().y  + m_viewRect.P.j * sz);
         float width = m_folderText.getLocalBounds().width;
         m_folderText.setOrigin(width/2.f,0.f);
     }

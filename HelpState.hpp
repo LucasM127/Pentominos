@@ -17,6 +17,7 @@ private:
     sf::Texture texture;
 
     void position();
+    void paint() override;
 };
 
 #endif //HELPSTATE_HPP

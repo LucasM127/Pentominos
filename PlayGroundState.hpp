@@ -24,6 +24,7 @@ private:
     Folder *activeFolder;
 
     void save();
+    void paint() override;
 
     PGUI::Button exit;
     bool isHovered;

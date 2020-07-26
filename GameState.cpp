@@ -16,6 +16,8 @@
 //1024 x 768
 //goes weird if width ever exceeds 32 lol -> cause of winShape as uint32_t
 //64.f size built
+
+//Only thing.. minimal grid cell size!
 StateMgr::StateMgr() : amFullScreen(false)// : m_grid()//22,14,64.f,64.f)//m_grid(32,18,50.f)//m_grid(24,32,32)// 
 {
     m_curGameState = nullptr;//???
@@ -27,6 +29,8 @@ StateMgr::StateMgr() : amFullScreen(false)// : m_grid()//22,14,64.f,64.f)//m_gri
     m_context.board = &m_board;
     m_context.font = &m_font;
     m_context.texture = &m_texture;
+    m_context.borderColor = sf::Color(96,64,64);//::Cyan;
+    m_context.borderTexID = TexAtlasID::INSIDE_PIECE;
 
     m_context.activeFolder = new Folder("Default");
 
@@ -41,7 +45,7 @@ StateMgr::StateMgr() : amFullScreen(false)// : m_grid()//22,14,64.f,64.f)//m_gri
         uint height = 48u * BOARD_HEIGHT;
         //m_window.create(modes[0], "Pentominos", sf::Style::Fullscreen);
         m_window.create(sf::VideoMode(width, height), "Pentominos");
-
+/*
         float boardAspectRatio = float(BOARD_WIDTH) / float(BOARD_HEIGHT);
         unsigned int winWidth  = m_window.getSize().x;
         unsigned int winHeight = m_window.getSize().y;
@@ -61,7 +65,8 @@ StateMgr::StateMgr() : amFullScreen(false)// : m_grid()//22,14,64.f,64.f)//m_gri
 
         m_grid.resize(BOARD_WIDTH, BOARD_HEIGHT, float(cellSz), float(cellSz));
 
-        PGUI::setCellSize(float(cellSz/2u));
+        PGUI::setCellSize(float(cellSz/2u));*/
+        resize(width, height);
     }
 
     //set the window and grid sizes here... common to all states.
@@ -130,13 +135,11 @@ StateMgr::~StateMgr()
 
 void StateMgr::resize(uint winWidth, uint winHeight)
 {
+    unsigned int minCellSz = 16u;//minimal cell size!
+
     m_window.setView(sf::View(sf::FloatRect(0,0,float(winWidth), float(winHeight))));
 
     float boardAspectRatio = float(BOARD_WIDTH) / float(BOARD_HEIGHT);
-    //unsigned int winWidth  = m_window.getSize().x;
-    //unsigned int winHeight = m_window.getSize().y;
-    //winWidth  = m_window.getSize().x;
-    //winHeight = m_window.getSize().y;
 
     float winAspectRatio = float(winWidth) / float(winHeight);
 
@@ -145,17 +148,76 @@ void StateMgr::resize(uint winWidth, uint winHeight)
         cellSz = float(winHeight) / float(BOARD_HEIGHT);
     else
         cellSz = float(winWidth) / float(BOARD_WIDTH);
-        
+    
+    //TODO FIX ME
+    //resize a window so no smaller than a minimal size?
+    if(cellSz < minCellSz)
+    {
+        //reset window to its last size!
+        if(winAspectRatio > boardAspectRatio)//the window is 'wider' than taller, black bars on left and right
+            m_window.setSize({winWidth, minCellSz * BOARD_HEIGHT});
+        else
+            m_window.setSize({minCellSz * BOARD_HEIGHT , winHeight});
+        return;
+        //resize(m_window.getSize().x, m_window.getSize().y);
+    }
+    
+    //number of pixels to offset the grid surface to be fully visible at the aspect ratio
     unsigned int x_offset = (winWidth - (cellSz * BOARD_WIDTH)) / 2;
     unsigned int y_offset = (winHeight - (cellSz * BOARD_HEIGHT)) / 2;
-    
-    m_grid.setOffset(float(x_offset), float(y_offset));
 
-    m_grid.resize(BOARD_WIDTH, BOARD_HEIGHT, float(cellSz), float(cellSz));
+    //ASSERT CELLSZ > 0
+    //size of grid 'border', may/may not be clipped, not part of display surface
+    unsigned int x_padding = (x_offset / cellSz) + 1;
+    unsigned int y_padding = (y_offset / cellSz) + 1;
+    
+    //pixel coordinates to position the grid to fit properly accounting for padding
+    //in view space so negative, float.
+    float grid_offset_x = float(x_offset) - float(x_padding) * float(cellSz);
+    float grid_offset_y = float(y_offset) - float(y_padding) * float(cellSz);
+    
+    m_grid.setOffset(grid_offset_x, grid_offset_y);
+
+    m_grid.resize(BOARD_WIDTH + 2 * x_padding, BOARD_HEIGHT + 2 * y_padding, float(cellSz), float(cellSz));
 
     PGUI::setCellSize(float(cellSz/2u));
 
     m_bgSprite.setScale(float(winWidth)/2.f, float(winHeight)/2.f);
+
+    if(m_curGameState) m_curGameState->setViewRect(x_padding, y_padding, BOARD_WIDTH, BOARD_HEIGHT);
+    m_context.viewRect.set(x_padding, y_padding, BOARD_WIDTH, BOARD_HEIGHT);
+
+    //repaint!
+    //Here is where we have the ...
+    //default should be a property of the state, global, like the other shits?
+    for(unsigned int i = 0; i < x_padding; ++i)
+        for(unsigned int j = 0; j < m_grid.getHeight(); ++j)
+        {
+            m_grid.setCellColor({i,j}, m_context.borderColor);
+            m_grid.setCellTexture({i,j}, getTextureUV(m_context.borderTexID), getTextureSize());
+        }
+    for(unsigned int i = x_padding; i < m_grid.getWidth() - x_padding; ++i)
+        for(unsigned int j = 0; j < y_padding; ++j)
+        {
+            m_grid.setCellColor({i,j}, m_context.borderColor);
+            m_grid.setCellTexture({i,j}, getTextureUV(m_context.borderTexID), getTextureSize());
+        }
+    for(unsigned int i = x_padding; i < m_grid.getWidth() - x_padding; ++i)
+        for(unsigned int j = BOARD_HEIGHT + y_padding; j < m_grid.getHeight(); ++j)
+        {
+            m_grid.setCellColor({i,j}, m_context.borderColor);
+            m_grid.setCellTexture({i,j}, getTextureUV(m_context.borderTexID), getTextureSize());
+        }
+    for(unsigned int i = BOARD_WIDTH + x_padding; i < m_grid.getWidth(); ++i)
+        for(unsigned int j = 0; j < m_grid.getHeight(); ++j)
+        {
+            m_grid.setCellColor({i,j}, m_context.borderColor);
+            m_grid.setCellTexture({i,j}, getTextureUV(m_context.borderTexID), getTextureSize());
+        }
+    
+    if(m_curGameState) m_curGameState->onPaint();
+
+    lastWinSz = m_window.getSize();
 }
 
 void StateMgr::run()
@@ -299,7 +361,8 @@ void StateMgr::run()
 
 GameState::GameState(StateMgr &m, Context &context)
      : grid(*context.grid), window(*context.window), font(*context.font), 
-     texture(*context.texture), mgr(m)
+     texture(*context.texture), m_borderColor(context.borderColor), m_borderTexID(context.borderTexID),
+     m_viewRect(context.viewRect), mgr(m)
 {
     float cellSz = grid.getCellSize().x;
     
@@ -342,6 +405,20 @@ void GameState::render()
     grid.render(window);
 }
 
+void GameState::onPaint()
+{
+    //the view...
+    for(unsigned int i = 0; i < m_viewRect.width; ++i)
+        for(unsigned int j = 0; j < m_viewRect.height; ++j)
+        {
+            Coord C_grid = m_viewRect.transform({i,j});
+            grid.setCellColor(C_grid, sf::Color::Black);
+            grid.setCellTexture(C_grid, getTextureUV(TexAtlasID::BACKGROUND_TEXTURE), getTextureSize());
+        }
+    
+    paint();
+}
+
 void GameState::onEvent(const sf::Event &event)
 {
     if(event.type == sf::Event::Resized)
@@ -349,7 +426,9 @@ void GameState::onEvent(const sf::Event &event)
         float cellSz = grid.getCellSize().y;
         m_bottomText.setCharacterSize(cellSz * 0.75f);
         float textWidth = m_bottomText.getGlobalBounds().width;
-        m_bottomText.setPosition((event.size.width - textWidth)/2.f, event.size.height - 2.f * cellSz - grid.getOffset().y);
+//        m_bottomText.setOrigin(textWidth/2.f, 0);
+
+        m_bottomText.setPosition((event.size.width - textWidth)/2.f, event.size.height - 2.f * cellSz - (m_viewRect.P.j * cellSz) - grid.getOffset().y);
     }
     handleEvent(event);
 }
@@ -361,7 +440,13 @@ void GameState::setBottomText(const std::string &string)
     float textWidth = m_bottomText.getGlobalBounds().width;
     float width = window.getSize().x;
     float height = window.getSize().y;
-    m_bottomText.setPosition((width - textWidth)/2.f, height - 2.f * cellSz - grid.getOffset().y);
+    m_bottomText.setPosition((width - textWidth)/2.f, height - 2.f * cellSz - (m_viewRect.P.j * cellSz) - grid.getOffset().y);
+//    m_bottomText.setPosition((width - textWidth)/2.f, height - 2.f * cellSz - grid.getOffset().y);
+}
+
+void GameState::setViewRect(unsigned int px, unsigned int py, unsigned int w, unsigned int h)
+{
+    m_viewRect.set(px, py, w, h);
 }
 
 EditState::EditState(StateMgr &mgr, Context &context)

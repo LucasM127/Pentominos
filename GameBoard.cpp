@@ -7,6 +7,8 @@
 
 #include <bitset>
 
+//create the game board...
+//give it a width / height
 void GameBoard::set(const CoordMapper &mapper, const Level &level)//int lvl)
 {
     m_winzoneMap.clear();
@@ -14,7 +16,9 @@ void GameBoard::set(const CoordMapper &mapper, const Level &level)//int lvl)
     m_data.clear();
     m_blocks.clear();
 
-    CM = mapper;
+    CM.width = BOARD_WIDTH;
+    CM.height = BOARD_HEIGHT;
+    //CM = mapper;
     //unsigned int width = CM.width;
     unsigned int height = CM.height;
     m_data.resize(CM.sz(), BACKGROUND_ID);
@@ -234,10 +238,13 @@ bool GameBoard::won()
     return true;
 }
 
-Controller::Controller(GameBoard &_board, Grid &_grid) : board (_board), grid(_grid), p_activeBlock(nullptr)
+Controller::Controller(GameBoard &_board, Grid &_grid, ViewRect &rect, sf::Color c, TexAtlasID tid)
+                    : board (_board), grid(_grid), m_viewRect(rect), 
+                    borderColor(c), borderTexID(tid), p_activeBlock(nullptr)
 {
     amColliding = false;
     idHover = idLastHovered = INVALID_ID;
+    winZoneIsValid = true;
 }
 
 void Controller::handleEvent(const sf::Event &event)
@@ -265,6 +272,9 @@ void Controller::handleEvent(const sf::Event &event)
         //no 'worldview' mapping required
         sf::Vector2f mousePos(event.mouseMove.x, event.mouseMove.y);
         m_activeCoord = grid.getCoordinate(mousePos);
+        //set local from global transform!!!
+        m_activeCoord.i -= m_viewRect.P.i;
+        m_activeCoord.j -= m_viewRect.P.j;
         //idHovered = board.getId(m_activeCoord);
         idHover = board.get(m_activeCoord)&0x0F;
         if(idLastHovered != idHover) hoverChanged = true;
@@ -481,12 +491,30 @@ DrawSettings::DrawSettings()
     }
 }
 
+void Controller::drawAll(DrawSettings &settings)
+{
+    //draw the winzone map, and all the pieces on the board
+    m_updatedCoords.resize(0);
+    m_updatedCoords = board.m_winShapeCoords;
+    for(auto &piece : board.m_blocks)
+    {
+        if(&piece == p_activeBlock) continue;
+        Coord P = piece.m_pos;
+        for(auto & _C : piece.m_coords)
+        {
+            m_updatedCoords.push_back(P + _C);
+        }
+    }
+
+    draw(settings);
+}
+
 void Controller::draw(DrawSettings &settings)
 {
     //std::cout<<m_updatedCoords.size()<<std::endl;
     for(const Coord &C : m_updatedCoords)
     {
-        settings.draw(C, grid, board, idHover, winZoneIsValid);
+        settings.draw(C, grid, board, m_viewRect, borderColor, borderTexID, idHover, winZoneIsValid);
     }
 
     //draw block overlay effect
@@ -495,6 +523,7 @@ void Controller::draw(DrawSettings &settings)
         for(int i = 0; i < 5; i++)
         {
             Coord C = p_activeBlock->m_coords[i] + p_activeBlock->m_pos;
+            C = m_viewRect.transform(C);
             if(amColliding) grid.setCellColor(C, sf::Color(255,0,0,128), true);
             else grid.setCellColor(C, sf::Color(0,255,0,128), true);
 
@@ -507,13 +536,21 @@ void Controller::draw(DrawSettings &settings)
     }
 }
 
-void DrawSettings::draw(Coord C, Grid &grid, GameBoard &board,
-                unsigned int idHover,
+bool DrawSettings::draw(Coord C, Grid &grid, GameBoard &board, ViewRect &viewRect,
+                sf::Color borderColor, TexAtlasID borderTexID, unsigned int idHover,
                 bool winZoneIsValid)
 {
     CoordMapper &CM = board.CM;
+    Coord C_grid = viewRect.transform(C);
 
-    if(!CM.isValid(C)) return;
+    if(!CM.isValid(C))
+    {
+        //default grid draw call here ?
+        //how to access the default...
+        grid.setCellTexture(C_grid, getTextureUV(borderTexID), getTextureSize());
+        grid.setCellColor(C_grid, borderColor, false);
+        return false;
+    }
     unsigned int id = board.m_data[CM.mapID(C)];
     bool inWinShape = board.isInWinShape(C);
 
@@ -525,14 +562,14 @@ void DrawSettings::draw(Coord C, Grid &grid, GameBoard &board,
         else color = sf::Color(255,170,170);
     }
     else color = sf::Color::Black;
-    grid.setCellColor(C, color, false);
+    grid.setCellColor(C_grid, color, false);
 
     if( (id&0x0F) > 12)
     {
-        if(id == BACKGROUND_ID) grid.setCellTexture(C, getTextureUV(TexAtlasID::BACKGROUND_TEXTURE), getTextureSize());
-        else if(id == WINZONE_ID) grid.setCellTexture(C, getTextureUV(TexAtlasID::WINZONE_TEXTURE), getTextureSize());
+        if(id == BACKGROUND_ID) grid.setCellTexture(C_grid, getTextureUV(TexAtlasID::BACKGROUND_TEXTURE), getTextureSize());
+        else if(id == WINZONE_ID) grid.setCellTexture(C_grid, getTextureUV(TexAtlasID::WINZONE_TEXTURE), getTextureSize());
         else throw;
-        return;
+        return true;
     }
     
     //a piece is on the board at this location
@@ -544,7 +581,7 @@ void DrawSettings::draw(Coord C, Grid &grid, GameBoard &board,
     int orientation = board.m_blocks[id].m_texOrientations[i];
     bool flipped = board.m_blocks[id].amFlipped;
 
-    grid.setCellTexture(C, getTextureUV(texId), getTextureSize(), orientation, flipped);
+    grid.setCellTexture(C_grid, getTextureUV(texId), getTextureSize(), orientation, flipped);
     
     //color of the piece at the location
     COLOR::HSL hsl;
@@ -572,5 +609,7 @@ void DrawSettings::draw(Coord C, Grid &grid, GameBoard &board,
     color = COLOR::fromHSL(hsl);
     color.a = pieceAlphaTransparency;
     
-    grid.setCellColor(C, color, true);
+    grid.setCellColor(C_grid, color, true);
+
+    return true;
 }

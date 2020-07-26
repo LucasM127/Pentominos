@@ -3,7 +3,7 @@
 #include <cassert>
 
 WinState::WinState(StateMgr &mgr, Context &context, WINSTATETYPE type)
-    : GameState(mgr, context), board(*context.board), m_controller(board, grid)
+    : GameState(mgr, context), board(*context.board), m_controller(board, grid, m_viewRect, context.borderColor, context.borderTexID)//or boardViewRect ...
 {   
     sf::Color color(255,255,255, 128);
     
@@ -32,14 +32,21 @@ WinState::WinState(StateMgr &mgr, Context &context, WINSTATETYPE type)
 
     m_renderTexture.create(window.getSize().x, window.getSize().y);
 
+    onPaint();
+/*
     CoordMapper &CM = board.CM;
     for(uint w = 0; w<CM.width; w++)
         for(uint h = 0; h<CM.height;h++)
         {
-            m_drawSettings.draw({w,h}, grid, board);
-        }
+            m_drawSettings.draw({w,h}, grid, board, m_viewRect);
+        }*/
     
     m_activeId= 0;
+}
+
+void WinState::paint()
+{
+    m_controller.drawAll(m_drawSettings);
 }
 
 void WinState::render()//target here ????
@@ -81,11 +88,11 @@ void WinState::tick()
     for(auto &_C : board.m_blocks[lastId].m_coords)
     {
         Coord C = board.m_blocks[lastId].m_pos + _C;
-        m_drawSettings.draw(C, grid, board, m_activeId);
+        m_drawSettings.draw(C, grid, board, m_viewRect, m_borderColor, m_borderTexID, m_activeId);
     }
     for(auto &_C : board.m_blocks[m_activeId].m_coords)
     {
         Coord C = board.m_blocks[m_activeId].m_pos + _C;
-        m_drawSettings.draw(C, grid, board, m_activeId);
+        m_drawSettings.draw(C, grid, board, m_viewRect, m_borderColor, m_borderTexID, m_activeId);
     }
 }
