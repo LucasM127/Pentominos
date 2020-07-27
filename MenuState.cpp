@@ -60,6 +60,8 @@ MenuState::MenuState(StateMgr &mgr, Context &context)
     onPaint();
 
     loadFolder();
+
+    setBottomText("Right click to edit level");
 }
 
 void MenuState::loadFolder()
@@ -290,4 +292,5 @@ void MenuState::render()
     for(auto &icon : m_icons) window.draw(icon.sprite);
     if(idSelected != INVALID_ID)
         window.draw(m_icons[idSelected].text);
+    window.draw(m_bottomText);
 }
