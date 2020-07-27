@@ -252,17 +252,19 @@ Pentamino::Pentamino(unsigned int i, Coord c, Orientation o, bool isFlipped)
 }
 
 void Pentamino::setOrientation(Orientation newOrientation, bool newIsFlipped)
-{
+{//rotateRight/left if is flipped...
     if(newIsFlipped != amFlipped) flip();
     if(newOrientation == m_orientation) return;
     if(newOrientation == ((m_orientation + 1)%4))
     {
-        rotateLeft();
+        if(amFlipped) rotateRight();
+        else rotateLeft();
         return;
     }
     if(((newOrientation + 1)%4) == m_orientation)
     {
-        rotateRight();
+        if(amFlipped) rotateLeft();
+        else rotateRight();
         return;
     }
     rotate180();

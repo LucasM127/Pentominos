@@ -7,6 +7,10 @@
 
 #include <bitset>
 
+//FIX THE DROP PIECE FUNCTION TOO!!!
+//there s a bug in calculating it
+//just save the position and coords of the piece and load them in instead of trying to recalculate them
+
 //create the game board...
 //give it a width / height
 void GameBoard::set(const CoordMapper &mapper, const Level &level)//int lvl)
@@ -184,7 +188,8 @@ uint32_t GameBoard::get(Coord C)
 }
 
 //is winzone area a multiple of 5?
-//convert to a vector???
+//FIX IF PIECES ARE NOT FULLY INSIDE, can be multiple of 5 that way.
+
 bool GameBoard::checkValidity()
 {
     //bool visited[CM.sz()];//, false];
