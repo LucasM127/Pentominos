@@ -302,9 +302,9 @@ void StateMgr::run()
                     if(!amFullScreen)
                     {
                         lastWinSz = m_window.getSize();
-                        std::vector<sf::VideoMode> modes = sf::VideoMode::getFullscreenModes();
-                        m_window.create(modes[0], "Pentominos", sf::Style::Fullscreen);
-                        resize(modes[0].width, modes[0].height);
+                        sf::VideoMode mode = sf::VideoMode::getDesktopMode();
+                        m_window.create(mode, "Pentominos", sf::Style::Fullscreen);
+                        resize(mode.width, mode.height);
                     }
                     else
                     {
