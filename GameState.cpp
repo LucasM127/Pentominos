@@ -216,8 +216,6 @@ void StateMgr::resize(uint winWidth, uint winHeight)
         }
     
     if(m_curGameState) m_curGameState->onPaint();
-
-    lastWinSz = m_window.getSize();
 }
 
 void StateMgr::run()
