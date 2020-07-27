@@ -157,7 +157,7 @@ void StateMgr::resize(uint winWidth, uint winHeight)
         if(winAspectRatio > boardAspectRatio)//the window is 'wider' than taller, black bars on left and right
             m_window.setSize({winWidth, minCellSz * BOARD_HEIGHT});
         else
-            m_window.setSize({minCellSz * BOARD_HEIGHT , winHeight});
+            m_window.setSize({minCellSz * BOARD_WIDTH , winHeight});
         return;
         //resize(m_window.getSize().x, m_window.getSize().y);
     }
