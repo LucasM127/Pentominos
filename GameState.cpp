@@ -356,6 +356,19 @@ void StateMgr::run()
 
         numFrames++;
         sf::sleep(sf::milliseconds(1));
+
+        //hack, don't understand the problem in linux enough
+        //how to constrain min window size x11?
+        //don't need to do this with windows though
+#ifndef _WIN32
+        {
+            uint width = m_window.getSize().x;
+            uint height = m_window.getSize().y;
+            if(width < 16u * BOARD_WIDTH) width = 16u * BOARD_WIDTH;
+            if(height < 16u * BOARD_HEIGHT) height = 16u * BOARD_HEIGHT;
+            m_window.setSize({width,height});
+        }
+#endif
     }
 }
 
