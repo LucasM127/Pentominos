@@ -84,7 +84,7 @@ void GameBoard::setWinShape(const Level &level)
     unsigned int height = CM.height;
 
     int x_offset = (width - level.width)/2;
-    int y_offset = (height - level.height)/3;
+    int y_offset = (height - level.height)/2;//3;
     //std::cout<<"x_ofsset is "<<x_offset<<" width "<<level.width<<std::endl;
     
     for(unsigned int i = 0; i < level.height; i++)
@@ -278,9 +278,11 @@ void Controller::handleEvent(const sf::Event &event)
         sf::Vector2f mousePos(event.mouseMove.x, event.mouseMove.y);
         m_activeCoord = grid.getCoordinate(mousePos);
         //set local from global transform!!!
-        m_activeCoord.i -= m_viewRect.P.i;
-        m_activeCoord.j -= m_viewRect.P.j;
+        m_viewRect.localTransform(m_activeCoord);
+//        m_activeCoord.i -= m_viewRect.P.i;
+//        m_activeCoord.j -= m_viewRect.P.j;
         //idHovered = board.getId(m_activeCoord);
+        //worries about isValid inside the function...
         idHover = board.get(m_activeCoord)&0x0F;
         if(idLastHovered != idHover) hoverChanged = true;
         else hoverChanged = false;
@@ -528,7 +530,7 @@ void Controller::draw(DrawSettings &settings)
         for(int i = 0; i < 5; i++)
         {
             Coord C = p_activeBlock->m_coords[i] + p_activeBlock->m_pos;
-            C = m_viewRect.transform(C);
+            C = m_viewRect.toGlobal(C);//transform(C);
             if(amColliding) grid.setCellColor(C, sf::Color(255,0,0,128), true);
             else grid.setCellColor(C, sf::Color(0,255,0,128), true);
 
@@ -546,7 +548,7 @@ bool DrawSettings::draw(Coord C, Grid &grid, GameBoard &board, ViewRect &viewRec
                 bool winZoneIsValid)
 {
     CoordMapper &CM = board.CM;
-    Coord C_grid = viewRect.transform(C);
+    Coord C_grid = viewRect.toGlobal(C);//transform(C);
 
     if(!CM.isValid(C))
     {

@@ -121,7 +121,7 @@ void setGridCoordTexBasedOnDataAtCoord(Grid &grid, std::vector<uint32_t> &data, 
     int x_off = texId%4;
     int y_off = texId/4;
     sf::Vector2f uvpos(128.f * (float)x_off, 128.f * (float)y_off);
-    Coord C_grid = viewRect.transform(C);
+    Coord C_grid = viewRect.toGlobal(C);//transform(C);
     if(isBG) grid.setCellTexture(C_grid, uvpos, {128.f,128.f});
     else
         grid.setCellTexture(C_grid, uvpos, {128.f, 128.f}, orientation, false);
@@ -223,7 +223,7 @@ void WelcomeState::handleEvent(const sf::Event &event)
 //colour
 void WelcomeState::draw(Coord C)
 {
-    Coord C_grid = m_viewRect.transform(C);
+    Coord C_grid = m_viewRect.toGlobal(C);//transform(C);
     if(checkBit(m_data[C.j], C.i))
 //                grid.setCellColor(C, sf::Color(64,64,64,160));
                 grid.setCellColor(C_grid, sf::Color(255 * C.i / 22,255 * C.j / 13,128));//sf::Color::White);

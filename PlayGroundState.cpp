@@ -117,7 +117,8 @@ void PlayGroundState::paint()
 void PlayGroundState::save()
 {
     std::string name;
-    PGUI::TextBox textbox(window, L"Save level as...", "", font);//, [&](){name = textbox.getString();});
+    PGUI::TextBoxDB textbox(*this, window, L"Save level as...", "", font);
+    //PGUI::TextBox textbox(window, L"Save level as...", "", font);//, [&](){name = textbox.getString();});
     PGUI::MSG ret = textbox.run();
     if(ret != PGUI::MSG::TEXT_CHANGED) return;
     name = textbox.getString();

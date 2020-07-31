@@ -128,7 +128,7 @@ void HelpState::paint()
         if(checkBit(data, i))//  m_data[C.j], C.i))
         {
             Coord C(i + x_offset, j + y_offset);
-            Coord C_Grid = m_viewRect.transform(C);
+            Coord C_Grid = m_viewRect.toGlobal(C);//transform(C);
                 grid.setCellColor(C_Grid, sf::Color(64,64,64,160));
                 //grid.setCellColor(C, sf::Color(255,64,64));//(255 * C.i / 22,255 * C.j / 13,128));//sf::Color::White);
                 grid.setCellTexture(C_Grid,getTextureUV(TexAtlasID::WINZONE_TEXTURE),getTextureSize());

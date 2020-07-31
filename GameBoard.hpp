@@ -22,7 +22,15 @@ struct ViewRect
         width = w;
         height = h;
     }
-    inline Coord transform(Coord C){ return (P + C); }
+    inline Coord toGlobal(Coord C){ return (P + C); }
+    inline bool localTransform(Coord &C)
+    {
+        C.i -= P.i;
+        C.j -= P.j;
+        return (C.i < width && C.j < height);
+    }
+//    inline Coord toLocal(Coord C){ return Coord(C.i - P.i, C.j - P.j); }
+    //inline Coord transform(Coord C){ return (P + C); }
     Coord P;
     unsigned int width, height;
 };

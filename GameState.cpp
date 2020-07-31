@@ -358,6 +358,9 @@ void StateMgr::run()
         //hack, don't understand the problem in linux enough
         //how to constrain min window size x11?
         //don't need to do this with windows though
+        /*
+        //no good fullscreen... 
+        sdl?
 #ifndef _WIN32
         {
             uint width = m_window.getSize().x;
@@ -367,6 +370,7 @@ void StateMgr::run()
             m_window.setSize({width,height});
         }
 #endif
+*/
     }
 }
 
@@ -422,7 +426,7 @@ void GameState::onPaint()
     for(unsigned int i = 0; i < m_viewRect.width; ++i)
         for(unsigned int j = 0; j < m_viewRect.height; ++j)
         {
-            Coord C_grid = m_viewRect.transform({i,j});
+            Coord C_grid = m_viewRect.toGlobal({i,j});//transform({i,j});
             grid.setCellColor(C_grid, sf::Color::Black);
             grid.setCellTexture(C_grid, getTextureUV(TexAtlasID::BACKGROUND_TEXTURE), getTextureSize());
         }
