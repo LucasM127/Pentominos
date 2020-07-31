@@ -6,6 +6,8 @@
 
 #include <iostream>
 
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem::v1;
 //std::vector<Level> Level::m_levels;
 
 /*
@@ -91,9 +93,18 @@ void Folder::load()
 //    return levels;
 }
 
+//YAY
+
+//#include <stdlib.h>
 //void saveLevels(const std::vector<Level> &levels, const std::string &fileName)
 void Folder::save()
 {
+    if(!fs::exists("Assets/Levels"))
+        fs::create_directory("Assets/Levels");
+    //system("mkdir -p Assets/Levels");
+    //e_t process_mask = umask(0);
+    //mkdir("Assets/Levels", S_IRWXU | S_IRWXG | S_IRWXO);
+    //sk(process_mask);
     std::ofstream file("Assets/Levels/" + name + ".lvl", std::ios::binary);
     if(!file) throw std::runtime_error("Unable to write to " + name);
     
