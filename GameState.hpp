@@ -13,7 +13,7 @@ struct Context
     Grid *grid;
     GameBoard *board;
     sf::Font *font;
-    sf::Texture *texture;
+    //sf::Texture *texture;
     Folder *activeFolder;
     ViewRect viewRect;
     sf::Color borderColor;
@@ -63,7 +63,6 @@ protected:
     Grid &grid;//common grid across the states... just displays different things...
     sf::RenderWindow &window;
     sf::Font &font;//or resource allocator thingy
-    sf::Texture &texture;
     sf::Color m_borderColor;
     TexAtlasID m_borderTexID;
 

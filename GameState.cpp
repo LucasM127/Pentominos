@@ -28,7 +28,7 @@ StateMgr::StateMgr() : amFullScreen(false)// : m_grid()//22,14,64.f,64.f)//m_gri
     m_context.grid = &m_grid;
     m_context.board = &m_board;
     m_context.font = &m_font;
-    m_context.texture = &m_texture;
+    //m_context.texture = &m_texture;
     m_context.borderColor = sf::Color(96,64,64);//::Cyan;
     m_context.borderTexID = TexAtlasID::INSIDE_PIECE;
 
@@ -103,6 +103,8 @@ StateMgr::StateMgr() : amFullScreen(false)// : m_grid()//22,14,64.f,64.f)//m_gri
     //load assets
     //TODO: TEST FOR LOADFAIL... what to do... abstract out?
     m_texture.loadFromFile("Assets/TexAtlas.png");//Elephant.png");//
+    m_texture.setSmooth(true);
+    m_grid.setTexMap(&m_texture);
     m_font.loadFromFile("Assets/FreeSans.ttf");
 
     m_stateMapping[WELCOME] = [this](int x)->GameState*{return new WelcomeState(*this, m_context);};
@@ -376,7 +378,7 @@ void StateMgr::run()
 
 GameState::GameState(StateMgr &m, Context &context)
      : grid(*context.grid), window(*context.window), font(*context.font), 
-     texture(*context.texture), m_borderColor(context.borderColor), m_borderTexID(context.borderTexID),
+     m_borderColor(context.borderColor), m_borderTexID(context.borderTexID),
      m_viewRect(context.viewRect), mgr(m)
 {
     float cellSz = grid.getCellSize().x;

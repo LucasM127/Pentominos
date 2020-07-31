@@ -132,7 +132,7 @@ WelcomeState::WelcomeState(StateMgr &mgr, Context &context)
     : GameState(mgr, context)
 {
     const Level &level = Level::intro;
-    grid.setTexMap(context.texture);//uhuh
+    //grid.setTexMap(context.texture);//uhuh
     uint height = m_viewRect.height;//grid.getHeight();
     uint width = m_viewRect.width;// grid.getWidth();
 
