@@ -34,4 +34,6 @@ private:
 
     void loadFolder();
     void position();
+    void updateId(uint id);
+    void execute();
 };

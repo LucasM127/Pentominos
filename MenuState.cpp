@@ -55,7 +55,8 @@ MenuState::MenuState(StateMgr &mgr, Context &context)
 {
     window.setTitle("Pentaminos");
 
-    idSelected = -1;
+    idLastSelected = -1;
+    idSelected = 0;//-1;
     //grid.clear(sf::Color::Black);
     onPaint();
 
@@ -126,9 +127,9 @@ void MenuState::handleEvent(const sf::Event &event)
         position();
     if(event.type == sf::Event::MouseMoved)
     {
-        idLastSelected = idSelected;
-        idSelected = INVALID_ID;
+        //iff???
         
+        //idSelected = INVALID_ID;
         for(uint i = 0; i < m_icons.size(); i++)
         {
             auto &icon = m_icons[i];
@@ -138,6 +139,9 @@ void MenuState::handleEvent(const sf::Event &event)
                 break;
             }
         }
+        updateId(idSelected);
+        /*
+        idLastSelected = idSelected;
         if(idLastSelected != idSelected)
         {
             if(idSelected != INVALID_ID)
@@ -160,129 +164,212 @@ void MenuState::handleEvent(const sf::Event &event)
                 m_icons[idLastSelected].sprite.scale(0.8f,0.8f);
             }
         }
+        */
     }
 
     if(event.type == sf::Event::MouseButtonPressed)
     {
+        if(event.mouseButton.button == sf::Mouse::Left)
+            execute();
+        if(event.mouseButton.button == sf::Mouse::Right && idSelected >= NUM_ICONS)
+        {
+            PGUI::TextBoxDB textbox(*this, window, L"Rename level", (*pp_activeFolder)->levels[idSelected-NUM_ICONS].name, font);
+            //PGUI::TextBox textbox(window, L"Rename level", (*pp_activeFolder)->levels[idSelected-NUM_ICONS].name, font);//, [&]()->void{name = textbox.getString();});
+            PGUI::MSG ret = textbox.run();
+            //?
+            if(ret == PGUI::MSG::TEXT_CHANGED)
+            {//can optimize this
+                (*pp_activeFolder)->levels[idSelected-NUM_ICONS].name = textbox.getString();
+                (*pp_activeFolder)->save();
+                loadFolder();
+            }
+            if(ret == PGUI::MSG::DELETE)
+            {
+                (*pp_activeFolder)->levels.erase((*pp_activeFolder)->levels.begin() + (idSelected-NUM_ICONS));
+                (*pp_activeFolder)->save();
+                loadFolder();
+                idSelected--;
+                idLastSelected = INVALID_ID;
+                updateId(idSelected);
+//                        idSelected = INVALID_ID;//no longer exists, duh
+            }
+            if(ret == PGUI::MSG::MOVE)
+            {//copy pasta
+                std::string path = "Assets/Levels/";
+                std::vector<std::string> files;
+                for (const auto & entry : fs::directory_iterator(path))
+                {
+#ifdef _WIN32
+                    std::wstring ws = entry.path();
+                    std::string s;
+                    for (auto c : ws) s.push_back(c);
+#else
+                    std::string s = entry.path();
+#endif
+                    s.erase(s.begin(), s.begin() + path.size());
+                    s.erase(s.end()-4, s.end());
+                    files.push_back(s);
+                }
+                //for(auto &s : files) std::cout<<s<<std::endl;
+                
+                //use filedirectory iterator...
+                PGUI::ListBoxDB listbox(*this, window, L"List contents", font, files);//, "Folders...");
+                PGUI::MSG ret = listbox.run();
+                if(ret == PGUI::MSG::LIST_ITEM_CHOSE && files[listbox.getChosenId()] != (*pp_activeFolder)->name)
+                {
+                    //move it there...
+                    Folder tempFolder(files[listbox.getChosenId()]);
+                    if (tempFolder.levels.size() >= 24)
+                    {
+                        PGUI::DialogBox DB(12,2,*this, window, font, L"File is full!");
+                        DB.run();
+                        return;
+                    }
+                    tempFolder.levels.push_back((*pp_activeFolder)->levels[idSelected - NUM_ICONS]);
+                    //remove it here...
+                    (*pp_activeFolder)->levels.erase((*pp_activeFolder)->levels.begin() + idSelected - NUM_ICONS);
+                    loadFolder();
+                    //if we erase it and have the last file selected... our idSelected is invalidated...
+                    idSelected--;
+                    idLastSelected = INVALID_ID;
+                    updateId(idSelected);
+//                            idSelected = INVALID_ID;
+                }
+            }
+        }
+    }
+    if(event.type == sf::Event::KeyPressed)
+    {
+        if(event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
+        {
+            idSelected++;
+            idSelected %= m_icons.size();
+            updateId(idSelected);
+        }
+        if(event.key.code == sf::Keyboard::A || event.key.code == sf::Keyboard::Left)
+        {
+            idSelected = (idSelected ? idSelected-1 : m_icons.size()-1);
+            updateId(idSelected);
+//            idSelected %= m_icons.size();
+        }
+        if(event.key.code == sf::Keyboard::W || event.key.code == sf::Keyboard::Up)
+        {//width of 7 hardcoded in at the moment
+            idSelected = (idSelected > 6) ? (idSelected - 7) : (idSelected);
+            updateId(idSelected);
+        }
+        if(event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
+        {//width of 7 hardcoded in at the moment
+            idSelected = (m_icons.size() - idSelected) > 7 ? (idSelected + 7) : (idSelected);
+            updateId(idSelected);
+        }
+        if(event.key.code == sf::Keyboard::Enter)
+        {
+            execute();
+        }
+            
+    }
+
+}
+
+void MenuState::updateId(uint id)
+{
+    if(idSelected == idLastSelected) return;
+    //if(id == idSelected) return;
+    
+    if(idLastSelected != idSelected)
+    {
         if(idSelected != INVALID_ID)
         {
-            if(idSelected < NUM_ICONS)//add or remove???
-            {
-                if(idSelected == ID_SWITCHFOLDER)
-                {
-                    //list of names input....
-                    std::string path = "Assets/Levels/";
-                    std::vector<std::string> files;
-                    for (const auto & entry : fs::directory_iterator(path))
-                    {
-#ifdef _WIN32
-                        std::wstring ws = entry.path();
-                        std::string s;
-                        for (auto c : ws) s.push_back(c);
-#else
-                        std::string s = entry.path();
-#endif
-                        s.erase(s.begin(), s.begin() + path.size());
-                        s.erase(s.end()-4, s.end());
-                        files.push_back(s);
-                    }
-                    //for(auto &s : files) std::cout<<s<<std::endl;
-                    
-                    //use filedirectory iterator...
-                    PGUI::ListBox listbox(window, "List contents", font, files);//, "Folders...");
-                    PGUI::MSG ret = listbox.run();
-                    if(ret == PGUI::MSG::LIST_ITEM_CHOSE)
-                    {
-                        //std::cout<<"Item chosen was: "<<files[listbox.getChosenId()]<<std::endl;
-                        delete *pp_activeFolder;
-                        *pp_activeFolder = new Folder(files[listbox.getChosenId()]);
-                        loadFolder();
-                    }
-                }
-                if(idSelected == ID_CREATELEVEL)
-                {
-                    if(m_icons.size()<28)
-                    requestStateChange(PLAYGROUND);
-                }
-                if(idSelected == ID_CREATEFOLDER)
-                {
-                    PGUI::TextBox textbox(window, L"Enter Folder Name", "", font);
-                    PGUI::MSG ret = textbox.run();
-                    if(ret == PGUI::MSG::TEXT_CHANGED)
-                    {
-                        delete *pp_activeFolder;
-                        *pp_activeFolder = new Folder(textbox.getString());
-                        //load it in the menu
-                        loadFolder();
-                    }
-                }
-                if(idSelected == ID_HELP)
-                {
-                    requestStateChange(HELP);
-                }
-            }
+            if(idSelected == ID_CREATELEVEL && m_icons.size()>=28)
+                m_icons[idSelected].sprite.setColor(sf::Color(128,128,128));
+            else if(idSelected == ID_CREATELEVEL || idSelected == ID_CREATEFOLDER || idSelected == ID_SWITCHFOLDER)
+                m_icons[idSelected].sprite.setColor(sf::Color::Yellow);
+//                else if(idSelected == ID_SWITCHFOLDER)
+//                    m_icons[idSelected].sprite.setColor(sf::Color(255,128,0));
+            else if(idSelected == ID_HELP)
+                m_icons[idSelected].sprite.setColor(sf::Color::Red);
             else
-            {
-                if(event.mouseButton.button == sf::Mouse::Right)
-                {
-                    PGUI::TextBox textbox(window, L"Rename level", (*pp_activeFolder)->levels[idSelected-NUM_ICONS].name, font);//, [&]()->void{name = textbox.getString();});
-                    PGUI::MSG ret = textbox.run();
-                    //?
-                    if(ret == PGUI::MSG::TEXT_CHANGED)
-                    {//can optimize this
-                        (*pp_activeFolder)->levels[idSelected-NUM_ICONS].name = textbox.getString();
-                        (*pp_activeFolder)->save();
-                        loadFolder();
-                    }
-                    if(ret == PGUI::MSG::DELETE)
-                    {
-                        (*pp_activeFolder)->levels.erase((*pp_activeFolder)->levels.begin() + (idSelected-NUM_ICONS));
-                        (*pp_activeFolder)->save();
-                        loadFolder();
-                        idSelected = INVALID_ID;//no longer exists, duh
-                    }
-                    if(ret == PGUI::MSG::MOVE)
-                    {//copy pasta
-                        std::string path = "Assets/Levels/";
-                        std::vector<std::string> files;
-                        for (const auto & entry : fs::directory_iterator(path))
-                        {
-#ifdef _WIN32
-                            std::wstring ws = entry.path();
-                            std::string s;
-                            for (auto c : ws) s.push_back(c);
-#else
-                            std::string s = entry.path();
-#endif
-                            s.erase(s.begin(), s.begin() + path.size());
-                            s.erase(s.end()-4, s.end());
-                            files.push_back(s);
-                        }
-                        //for(auto &s : files) std::cout<<s<<std::endl;
-                        
-                        //use filedirectory iterator...
-                        PGUI::ListBox listbox(window, "List contents", font, files);//, "Folders...");
-                        PGUI::MSG ret = listbox.run();
-                        if(ret == PGUI::MSG::LIST_ITEM_CHOSE && files[listbox.getChosenId()] != (*pp_activeFolder)->name)
-                        {
-                            //move it there...
-                            Folder tempFolder(files[listbox.getChosenId()]);
-                            tempFolder.levels.push_back((*pp_activeFolder)->levels[idSelected - NUM_ICONS]);
-                            //remove it here...
-                            (*pp_activeFolder)->levels.erase((*pp_activeFolder)->levels.begin() + idSelected - NUM_ICONS);
-                            loadFolder();
-                            //if we erase it and have the last file selected... our idSelected is invalidated...
-                            idSelected = INVALID_ID;
-                        }
-                    }
-                }
-                else
-                requestStateChange(PLAY, idSelected - NUM_ICONS);
-            }
-            
+                m_icons[idSelected].sprite.setColor(sf::Color::Green);
+            m_icons[idSelected].sprite.scale(1.25f,1.25f);
+        }
+        if(idLastSelected != INVALID_ID)// m_levelTexts[idLastSelected].setFillColor(sf::Color::White);
+        {
+            m_icons[idLastSelected].sprite.setColor(sf::Color::White);
+            m_icons[idLastSelected].sprite.scale(0.8f,0.8f);
         }
     }
 
+    idLastSelected = idSelected;
+}
+
+void MenuState::execute()
+{
+    if(idSelected < NUM_ICONS)//add or remove???
+    {
+        if(idSelected == ID_SWITCHFOLDER)
+        {
+            //list of names input....
+            std::string path = "Assets/Levels/";
+            std::vector<std::string> files;
+            for (const auto & entry : fs::directory_iterator(path))
+            {
+#ifdef _WIN32
+                std::wstring ws = entry.path();
+                std::string s;
+                for (auto c : ws) s.push_back(c);
+#else
+                std::string s = entry.path();
+#endif
+                s.erase(s.begin(), s.begin() + path.size());
+                s.erase(s.end()-4, s.end());
+                files.push_back(s);
+            }
+            //for(auto &s : files) std::cout<<s<<std::endl;
+            
+            //use filedirectory iterator...
+            PGUI::ListBoxDB listbox(*this, window, L"List contents", font, files);
+            //PGUI::ListBox listbox(window, "List contents", font, files);//, "Folders...");
+            PGUI::MSG ret = listbox.run();
+            if(ret == PGUI::MSG::LIST_ITEM_CHOSE)
+            {
+                //std::cout<<"Item chosen was: "<<files[listbox.getChosenId()]<<std::endl;
+                delete *pp_activeFolder;
+                *pp_activeFolder = new Folder(files[listbox.getChosenId()]);
+                loadFolder();
+            }
+        }
+        if(idSelected == ID_CREATELEVEL)
+        {
+            //PGUI::TextBoxDB DB(*this, window, L"Tst Title", "Foo", font);
+            //PGUI::MSG msg = DB.run();
+            //std::cout<<PGUI::MSGStrings[(uint)msg]<<std::endl;
+//                    PGUI::DialogBox DB(12, 3, *this, window, font, L"Test Title");
+
+            if(m_icons.size()<28)
+            requestStateChange(PLAYGROUND);
+        }
+        if(idSelected == ID_CREATEFOLDER)
+        {
+            PGUI::TextBoxDB textbox(*this, window, L"Enter Folder Name", "", font);
+            //PGUI::TextBox textbox(window, L"Enter Folder Name", "", font);
+            PGUI::MSG ret = textbox.run();
+            if(ret == PGUI::MSG::TEXT_CHANGED)
+            {
+                delete *pp_activeFolder;
+                *pp_activeFolder = new Folder(textbox.getString());
+                //load it in the menu
+                loadFolder();
+            }
+        }
+        if(idSelected == ID_HELP)
+        {
+            requestStateChange(HELP);
+        }
+    }
+    else
+    {
+        requestStateChange(PLAY, idSelected - NUM_ICONS);
+    }
 }
 
 void MenuState::render()
