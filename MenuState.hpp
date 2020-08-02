@@ -36,4 +36,6 @@ private:
     void position();
     void updateId(uint id);
     void execute();
+
+    sf::Vector2f mousePos;
 };

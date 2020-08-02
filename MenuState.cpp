@@ -63,6 +63,8 @@ MenuState::MenuState(StateMgr &mgr, Context &context)
     loadFolder();
 
     setBottomText("Right click to edit level");
+
+    updateId(idSelected);
 }
 
 void MenuState::loadFolder()
@@ -121,7 +123,7 @@ void MenuState::position()
 
 void MenuState::handleEvent(const sf::Event &event)
 {
-    sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+    mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
     if(event.type == sf::Event::Resized)
         position();
@@ -169,6 +171,7 @@ void MenuState::handleEvent(const sf::Event &event)
 
     if(event.type == sf::Event::MouseButtonPressed)
     {
+        if(!m_icons[idSelected].isHovered(mousePos)) return;
         if(event.mouseButton.button == sf::Mouse::Left)
             execute();
         if(event.mouseButton.button == sf::Mouse::Right && idSelected >= NUM_ICONS)
