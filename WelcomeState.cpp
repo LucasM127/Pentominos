@@ -112,7 +112,7 @@ void setGridCoordTexBasedOnDataAtCoord(Grid &grid, std::vector<uint32_t> &data, 
     bool isBG = false;
     if(!checkCoord(C))
     {
-        return;
+        //return;
         isBG = true;
         texId = BACKGROUND_TEXTURE;
     }//assumed??? lol

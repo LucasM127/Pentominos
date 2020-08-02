@@ -34,9 +34,12 @@ StateMgr::StateMgr() : amFullScreen(false)// : m_grid()//22,14,64.f,64.f)//m_gri
 
     m_context.activeFolder = new Folder("Default");
 
-    newStateWasRequested = true;
-    nextState = WELCOME;
-    action = REPLACE;
+    //load assets
+    //TODO: TEST FOR LOADFAIL... what to do... abstract out?
+    m_texture.loadFromFile("Assets/TexAtlas.png");//Elephant.png");//
+    m_texture.setSmooth(true);
+    m_grid.setTexMap(&m_texture);
+    m_font.loadFromFile("Assets/FreeSans.ttf");
 
     //FULLSCREEN or custom window size...
     //calculate grid size based off of window size....
@@ -100,13 +103,6 @@ StateMgr::StateMgr() : amFullScreen(false)// : m_grid()//22,14,64.f,64.f)//m_gri
     //view.setSize(width, height);
     //m_window.setView(view);
 
-    //load assets
-    //TODO: TEST FOR LOADFAIL... what to do... abstract out?
-    m_texture.loadFromFile("Assets/TexAtlas.png");//Elephant.png");//
-    m_texture.setSmooth(true);
-    m_grid.setTexMap(&m_texture);
-    m_font.loadFromFile("Assets/FreeSans.ttf");
-
     m_stateMapping[WELCOME] = [this](int x)->GameState*{return new WelcomeState(*this, m_context);};
     m_stateMapping[MENU] = [this](int x)->GameState*{return new MenuState(*this, m_context);};
     m_stateMapping[PLAY] = [this](int x)->GameState*{return new PlayState(*this, m_context, x);};//where x = level
@@ -126,6 +122,11 @@ StateMgr::StateMgr() : amFullScreen(false)// : m_grid()//22,14,64.f,64.f)//m_gri
     m_bgTexture.setSmooth(true);
     m_bgSprite.setTexture(m_bgTexture);
     m_bgSprite.setScale((float)m_window.getSize().x/2.f, (float)m_window.getSize().y/2.f);
+
+    newStateWasRequested = false;// true;
+    m_curGameState = m_stateMapping[WELCOME](0);
+    //nextState = WELCOME;
+    //action = REPLACE;
 }
 
 StateMgr::~StateMgr()
