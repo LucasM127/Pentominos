@@ -53,7 +53,7 @@ DialogBox::DialogBox(uint width, uint height, GameState &_parent, sf::RenderWind
 
     //m_grid.clear(sf::Color::Cyan);
     TitleBar.set(0,width-2,0,0);//minx maxx miny maxy
-    TitleBar.color = sf::Color::White;
+    TitleBar.color = sf::Color(192,192,208);//White;
     TitleBar.setColor(m_grid);
     Close.set(width-1,width-1,0,0);
     Close.color = COLOR::brighten(sf::Color::Red, 0.5f);
@@ -68,6 +68,10 @@ DialogBox::DialogBox(uint width, uint height, GameState &_parent, sf::RenderWind
 
     //handleEvents();
     msg = MSG::CLOSED;
+
+    //Flush old incoming events from 'parent' window to start with fresh slate
+    sf::Event event;
+    while (window.pollEvent(event));
 }
 
 //coolio
@@ -229,7 +233,7 @@ TextBoxDB::TextBoxDB(GameState &_state, sf::RenderWindow &_parent, const std::ws
     m_Movetext.setString("MOVE");
     //translate + 1
 
-    bool cursorIsShowing = true;
+    cursorIsShowing = true;
 }
 
 void TextBoxDB::render()
