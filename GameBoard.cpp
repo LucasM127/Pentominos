@@ -300,7 +300,19 @@ void Controller::handleEvent(const sf::Event &event)
         {
             resetPiece();
         }
+        else if(event.mouseButton.button == sf::Mouse::Middle)
+        {
+            flipPiece();
+        }
     }
+    break;
+    case sf::Event::MouseWheelScrolled:
+    {
+        int delta = event.mouseWheelScroll.delta;
+        if(delta > 0) rotatePieceRight();
+        else rotatePieceLeft();
+    }
+    break;
     default:
         break;
     }
