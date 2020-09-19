@@ -391,10 +391,10 @@ std::string TextBoxDB::getString()
 //height? 
 ListBoxDB::ListBoxDB(GameState &_state, sf::RenderWindow &_parent, const std::wstring &title, sf::Font &font, std::vector<std::string> &_names)
     : DialogBox(12u, 
-    5u,//_names.size() > 10 ? 11 : names.size() + 1,
+    11u,//{_names.size() > 10 ? 11 : names.size() + 1},
     _state, _parent, font, title), names(_names)
 {
-    numEntriesShown = 4;
+    numEntriesShown = 10;//11 - 1
     offset = 0;
     activeId = -1;
 
@@ -484,6 +484,7 @@ void ListBoxDB::handleEvent(sf::Event &event)
 //handle if more than 10 entries shown...
         case sf::Event::MouseWheelScrolled:
         {//TO FIX ME!!!
+            if(numEntriesShown >= names.size()) break;
             if(event.mouseWheelScroll.delta < 0.f)
                 //scroll(1);
             {
